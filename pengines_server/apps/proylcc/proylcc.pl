@@ -12,6 +12,14 @@
  * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía. 
  */ 
 
+squareScore(Grilla, Columnas, Camino, Square) :-
+	%obtengo la lista de posiciones del camino y los valores de esas posiciones en la grilla
+	listaPosiciones(Camino, Columnas, ListaPos),
+	sublista(ListaPos, Grilla, ListaValoresCamino),
+	%obtengo el puntaje a partir los valores de la lista de celdas que conforman el camino
+	sumatoria(ListaValoresCamino, PuntajeParcial),
+	menorP2MayorX(PuntajeParcial, Square).
+
 join(Grid, NumOfColumns, Path, RGrids):-
 	Grid = [_N | _Ns],
 	generacionPrimerasGrillas(Grid, NumOfColumns, Path, Parcial),
@@ -22,9 +30,8 @@ join(Grid, NumOfColumns, Path, RGrids):-
 generacionPrimerasGrillas(Grilla, Columnas, Camino, GrillaResultante) :-
 	%obtengo la lista de posiciones del camino y las celdas que representan como una lista
 	listaPosiciones(Camino, Columnas, ListaPos),
-	sublista(ListaPos, Grilla, ListaValoresCamino),
 	reemplazarPorVacio(ListaPos, Grilla,GrillaConCeldasVacias),
-	reemplazoCeldaFinCamino(GrillaConCeldasVacias, Columnas, ListaValoresCamino, Camino, GrillaCeldaFinReemplazada),
+	reemplazoCeldaFinCamino(GrillaConCeldasVacias, Grilla, Columnas, Camino, GrillaCeldaFinReemplazada),
 	GrillaResultante = [GrillaConCeldasVacias, GrillaCeldaFinReemplazada].
 
 reemplazarPorVacio([], Grilla, Grilla).
@@ -32,16 +39,15 @@ reemplazarPorVacio([P| RestoListaPos], Grilla, GrillaConCeldasVacias) :-
 	reemplazarPos(P, 0, Grilla, GrillaConAlgunosVacios),
 	reemplazarPorVacio(RestoListaPos, GrillaConAlgunosVacios, GrillaConCeldasVacias).
 
-reemplazoCeldaFinCamino(Grilla, Columnas,  ListaPosACambiar, Camino, GrillaResultante) :-
-	%obtengo el puntaje a partir los valores de la lista de celdas que conforman el camino
-	sumatoria(ListaPosACambiar, PuntajeParcial),
-	menorP2MayorX(PuntajeParcial, Puntaje),
+reemplazoCeldaFinCamino(GrillaConCeldasVacias, GrillaOriginal, Columnas, Camino, GrillaResultante) :-
+	%obtengo el puntaje, reutilizando la función actualSquare
+	squareScore(GrillaOriginal, Columnas, Camino, Puntaje),
 	%accedo al último elemento del camino (representa la celda de la grilla en la que terminó)
 	longitud(Camino, LargoCamino),
 	nth1(LargoCamino, Camino, CeldaPuntaje),
 	%accedo a la celda de la grilla en la que terminó el recorrido
 	posicionEnLista(CeldaPuntaje, Columnas, Pos),
-	reemplazarPos(Pos, Puntaje, Grilla, GrillaResultante).
+	reemplazarPos(Pos, Puntaje, GrillaConCeldasVacias, GrillaResultante).
 
 
 %posición del elemento de la grilla en la lista
@@ -54,3 +60,4 @@ listaPosiciones([X| Xs], NumColumns, Posiciones) :-
 	posicionEnLista(X, NumColumns, Pos),
 	listaPosiciones(Xs, NumColumns, SubListaPosiciones),
 	insertarInicio(SubListaPosiciones, Pos, Posiciones).
+

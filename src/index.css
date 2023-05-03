@@ -17,6 +17,21 @@ body {
   width: 100%;
 }
 
+.footer {
+  border-top: 1px solid lightgray;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.footer .square {
+  transition: 0.1s ease-in;
+  width: 70px;
+  height: 70px;
+  margin: 15px;
+}
+
 .score {
   margin: 10px;
   font-size: 25px;

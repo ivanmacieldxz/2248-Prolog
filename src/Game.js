@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import PengineClient from './PengineClient';
 import Board from './Board';
-import { joinResult } from './util';
+import { joinResult, numberToColor } from './util';
+import Square from './Square';
 
 let pengine;
 
@@ -41,6 +42,22 @@ function Game() {
     if (waiting) {
       return;
     }
+
+    if (newPath.length > 1) {
+      //código de la consulta a sv prolog
+      const gridS = JSON.stringify(grid);
+      const pathS = JSON.stringify(newPath);
+      const queryS = "squareScore(" + gridS + "," + numOfColumns + "," + pathS + ", Square)";
+
+      pengine.query(queryS, (success, response) => {
+        if (success) {
+          mostrarResultadoParcial(response.Square);
+        }
+      });
+    } else {
+      mostrarResultadoParcial(0);
+    }
+
     setPath(newPath);
     console.log(JSON.stringify(newPath));
   }
@@ -66,6 +83,7 @@ function Game() {
           RGrids
         ).
     */
+   mostrarResultadoParcial(0);
     const gridS = JSON.stringify(grid);
     const pathS = JSON.stringify(path);
     const queryS = "join(" + gridS + "," + numOfColumns + "," + pathS + ", RGrids)";
@@ -99,6 +117,19 @@ function Game() {
     }
   }
 
+  function mostrarResultadoParcial(puntajeParcial) {
+    let celdaPuntaje = document.querySelector(".footer .square");
+
+    if (puntajeParcial != 0) {
+      celdaPuntaje.innerText = puntajeParcial;
+      celdaPuntaje.style.backgroundColor = numberToColor(puntajeParcial);
+    } else {
+      celdaPuntaje.innerText = "";
+      celdaPuntaje.style.backgroundColor = "";
+    }
+    
+  }
+
   if (grid === null) {
     return null;
   }
@@ -114,6 +145,14 @@ function Game() {
         onPathChange={onPathChange}
         onDone={onPathDone}
       />
+      <div className='footer'>
+        <Square
+          value={0}
+          onClick={() => {}}
+          onMouseEnter={() => {}}
+          className={""}
+        />
+      </div>
     </div>
   );
 }
