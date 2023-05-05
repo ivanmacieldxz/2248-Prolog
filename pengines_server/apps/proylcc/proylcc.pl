@@ -61,13 +61,14 @@ listaPosiciones([X| Xs], NumColumns, Posiciones) :-
 	listaPosiciones(Xs, NumColumns, SubListaPosiciones),
 	insertarInicio(SubListaPosiciones, Pos, Posiciones).
 
-/* yep */
+/*------------------------------------ yep -------------------------------------*/
 boosterIguales(Grilla, Columnas, GrillaBoosterAplicado) :-
     length(Grilla, LargoGrilla),
     UltimoIndice is LargoGrilla - 1,
     listaListasPosicionesRevisar(UltimoIndice, Grilla, Columnas, ListaListasPosiciones),
     listaPosicionesReemplazar(UltimoIndice, Grilla, ListaListasPosiciones, PosicionesReemplazar),
-    reemplazoCero(Grilla, PosicionesReemplazar, GrillaBoosterAplicado).
+    reemplazoCero(Grilla, PosicionesReemplazar, GrillaReemplazada),
+	GrillaBoosterAplicado = [GrillaReemplazada].
 
 listaListasPosicionesRevisar(0, Grilla, Columnas, Lista) :-
     listaPosicionesRevisar(0, Grilla, Columnas, ListaPos0),

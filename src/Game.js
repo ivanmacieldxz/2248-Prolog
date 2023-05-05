@@ -3,6 +3,7 @@ import PengineClient from './PengineClient';
 import Board from './Board';
 import { joinResult, numberToColor } from './util';
 import Square from './Square';
+import Booster from './Booster';
 
 let pengine;
 
@@ -120,7 +121,7 @@ function Game() {
   function mostrarResultadoParcial(puntajeParcial) {
     let celdaPuntaje = document.querySelector(".footer .square");
 
-    if (puntajeParcial != 0) {
+    if (puntajeParcial !== 0) {
       celdaPuntaje.innerText = puntajeParcial;
       celdaPuntaje.style.backgroundColor = numberToColor(puntajeParcial);
     } else {
@@ -128,6 +129,21 @@ function Game() {
       celdaPuntaje.style.backgroundColor = "";
     }
     
+  }
+
+  function colapsarIguales() {
+    const gridS = JSON.stringify(grid);
+    const queryS = "boosterIguales(" + gridS + "," + numOfColumns + ", NuevaMatriz)";
+    setWaiting(true);
+    pengine.query(queryS, (success, response) => {
+      if (success) {
+        animateEffect(response['NuevaMatriz']);
+        //console.log(response.NuevaMatriz);
+        //setWaiting(false);
+      } else {
+        setWaiting(false);
+      }
+    });
   }
 
   if (grid === null) {
@@ -151,6 +167,10 @@ function Game() {
           onClick={() => {}}
           onMouseEnter={() => {}}
           className={""}
+        />
+        <Booster
+          value={"C"}
+          onClick={colapsarIguales}
         />
       </div>
     </div>
