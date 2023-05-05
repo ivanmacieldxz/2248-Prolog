@@ -11,7 +11,12 @@
         potencia/3,
         menorP2MayorX/2,
         insertarInicio/3,
-        sublista/3
+        sublista/3,
+        insertarFinal/3,
+        esBordeDer/3,
+        esBordeInf/3,
+        esBordeInfDer/3,
+        esBordeIzq/3
     ]).
 
 %largo de una lista
@@ -55,6 +60,10 @@ insertarInicio([], A, [A]).
 insertarInicio([X | Xs], A, [A | Zs]):-
     insertarInicio(Xs, X, Zs).
 
+insertarFinal([], A, [A]).
+insertarFinal([X | Xs], A, [X | Zs]) :-
+	insertarFinal(Xs, A, Zs).
+
 /*
  * Toma como primer parámetro una 
  * lista de índices de con las 
@@ -67,3 +76,58 @@ sublista([P|Ps], [X|Xs], Sublista) :-
     nth0(P, [X|Xs], Elem),
     sublista(Ps, [X|Xs], SubSinP),
     insertarInicio(SubSinP, Elem, Sublista).
+
+esBordeInfDer(Pos, Grilla, _Columnas) :- 
+    longitud(Grilla, Long),
+    Pos is Long - 1.
+esBordeInf(Pos, Grilla, Columnas) :-
+    longitud(Grilla, Long),
+    Pos >= Long - Columnas,
+    Pos =< Long - 1.
+
+esBordeDer(Pos, _Grilla, Columnas) :-
+    (Pos mod Columnas) =:= Columnas - 1.
+
+esBordeIzq(Pos, _Grilla, Columnas) :-
+    (Pos mod Columnas) =:= 0.
+
+/*
+[0, 4, 64, 32, 16,
+ 0, 0,  0,  2,  0,
+ 0, 0,  0,  0,  0,
+ 0, 4,  0, 16,  0,
+ 0, 0,  0,  0,  0,
+ 0,64,  0, 32,  0,
+ 0, 0,  0,  0,  0,
+ 0, 0,  0, 32,  0]
+
+[0, 4,  0,  0, 16,
+ 0, 8, 16,  0,  0,
+ 0, 0, 64, 64,  0,
+ 0, 0, 32,  0,  0,
+ 0, 0,  0,  0,  0,
+ 0, 0,  2,  0,  0,
+ 0, 0,  0,  0, 64,
+ 0, 0,  0, 32,  4]
+
+[
+0,4,64,0,16,
+0,8,16,0,0,
+0,0,0,0,0,
+0,0,32,0,4,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,64,
+32,0,0,0,4
+]
+
+[
+0,4,64,0,16,
+0,8,16,0,0,
+0,0,0,0,0,
+0,0,32,0,4,
+0,0,0,0,0,
+0,0,0,0,0,
+0,0,0,0,64,
+32,0,0,0,4
+]*/

@@ -61,3 +61,66 @@ listaPosiciones([X| Xs], NumColumns, Posiciones) :-
 	listaPosiciones(Xs, NumColumns, SubListaPosiciones),
 	insertarInicio(SubListaPosiciones, Pos, Posiciones).
 
+/* yep */
+boosterIguales(Grilla, Columnas, GrillaBoosterAplicado) :-
+    length(Grilla, LargoGrilla),
+    UltimoIndice is LargoGrilla - 1,
+    listaListasPosicionesRevisar(UltimoIndice, Grilla, Columnas, ListaListasPosiciones),
+    listaPosicionesReemplazar(UltimoIndice, Grilla, ListaListasPosiciones, PosicionesReemplazar),
+    reemplazoCero(Grilla, PosicionesReemplazar, GrillaBoosterAplicado).
+
+listaListasPosicionesRevisar(0, Grilla, Columnas, Lista) :-
+    listaPosicionesRevisar(0, Grilla, Columnas, ListaPos0),
+    Lista = [ListaPos0].
+listaListasPosicionesRevisar(PosActual, Grilla, Columnas, Lista) :-
+    listaPosicionesRevisar(PosActual, Grilla, Columnas, ListaPosActual),
+    PosSig is PosActual - 1,
+    listaListasPosicionesRevisar(PosSig, Grilla, Columnas, ListaParcial),
+    insertarFinal(ListaParcial, ListaPosActual, Lista).
+
+listaPosicionesRevisar(Pos, Grilla, Columnas, Lista) :-
+    length(Grilla, Long),
+    Pos >= 0,
+    Pos < Long,
+    PosD is Pos + 1,
+    PosA is Pos + Columnas,
+    PosDA is PosA + 1,
+    PosIA is PosA - 1,
+    (
+    	esBordeInfDer(Pos, Grilla, Columnas) ->
+    	Lista = [];
+        esBordeInf(Pos, Grilla, Columnas) ->
+        Lista = [PosD];
+    	esBordeDer(Pos, Grilla, Columnas) ->  
+        Lista = [PosIA, PosA];
+    	esBordeIzq(Pos, Grilla, Columnas) ->
+        Lista = [PosD, PosA, PosDA];
+    	Lista = [PosD, PosIA, PosA, PosDA]
+    ).
+
+listaPosicionesReemplazar(-1, _, _, []).
+listaPosicionesReemplazar(Inicio, Grilla, ListaListasPosicionesRevisar, ListaFinal) :-
+    Inicio >= 0,
+    Sig is Inicio - 1,
+    listaPosicionesReemplazar(Sig, Grilla, ListaListasPosicionesRevisar, ListaSinInicio),
+    nth0(Inicio, ListaListasPosicionesRevisar, ListaPosicionesRevisarInicio),
+    listaReemplazar(Inicio, Grilla, ListaPosicionesRevisarInicio, ListaDeInicio),
+    append(ListaSinInicio, ListaDeInicio, ListaFinal).
+
+%si la lista de posiciones a revisar está vacía, la lista resultante de posiciones a reemplazar es vacía
+listaReemplazar(_Pos, _Grilla, [], []).
+listaReemplazar(Pos, Grilla, [P|RestoPosicionesRevisar], ListaReemplazar) :-
+    listaReemplazar(Pos, Grilla, RestoPosicionesRevisar, ListaParcial),
+    (   
+    	nth0(Pos, Grilla, ElementoEnPos),
+        nth0(P, Grilla, ElementoEnP),
+        ElementoEnPos is ElementoEnP ->  
+    	insertarInicio(ListaParcial, P, ListaParcialSinPos),
+        insertarInicio(ListaParcialSinPos, Pos, ListaReemplazar);
+    	ListaReemplazar = ListaParcial
+    ).
+
+reemplazoCero(Grilla, [], Grilla).
+reemplazoCero(Grilla, [P|RestoPosiciones], GrillaResultante):-
+    reemplazoCero(Grilla, RestoPosiciones, GrillaSemiReemplazada),
+    reemplazarPos(P, 0, GrillaSemiReemplazada, GrillaResultante).
