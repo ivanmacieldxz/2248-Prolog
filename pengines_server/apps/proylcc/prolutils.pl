@@ -16,7 +16,13 @@
         esBordeDer/3,
         esBordeInf/3,
         esBordeInfDer/3,
-        esBordeIzq/3
+        esBordeIzq/3,
+        concatenar_listas_de_listas/2,
+        concatenar/3,
+        invertir/2,
+        lista_no_ceros/2,
+        lista_ceros/2,
+        lista_numeros/2
     ]).
 
 %largo de una lista
@@ -131,3 +137,47 @@ esBordeIzq(Pos, _Grilla, Columnas) :-
 0,0,0,0,64,
 32,0,0,0,4
 ]*/
+
+%lista_ceros(+L,-ListCeros)
+%obtiene la lista ListCeros que contiene todos los ceros de L
+lista_ceros([],[]).
+lista_ceros([X|XS],XSS):-
+    X \= 0,
+    lista_ceros(XS,XSS).
+lista_ceros([0|XS],[0|XSS]):-
+    lista_ceros(XS,XSS).
+
+%lista_no_ceros(+L,-ListNoCeros)
+%obtiene la lista ListListNoCerosCeros que contiene todos los elementos de L distintos de cero
+lista_no_ceros([],[]).
+lista_no_ceros([0|XS],XSS):-
+    lista_no_ceros(XS,XSS), !.
+lista_no_ceros([X|XS],[X|XSS]):-
+    X \= 0,
+    lista_no_ceros(XS,XSS).
+
+%obtiene lista equivalente a concatenar otras dos
+concatenar([],XS,XS).
+concatenar([X|XS],Y,[X|XSS]):-
+    concatenar(XS,Y,XSS).
+
+%obtiene lista invertida
+invertir([],[]).
+invertir([X|XS], L):-
+    invertir(XS,L1),
+    concatenar(L1,[X],L).
+
+%lista_numeros(+N,-Result)
+%obtiene una lista Result que contiene los elementos del 0 al N-1 descendente 
+lista_numeros(0, []).
+lista_numeros(N, [X|Xs]) :-
+    X is N-1,
+    N1 is N-1,
+    lista_numeros(N1, Xs), !.
+
+%concatenar_listas_de_listas(+List,-Result)
+%obtiene una lista Result que contiene los elementos de las listas de List 
+concatenar_listas_de_listas([], []).
+concatenar_listas_de_listas([X|XS], Grid):-
+    concatenar_listas_de_listas(XS, Grid1),
+    concatenar(X, Grid1, Grid).

@@ -22,8 +22,9 @@ squareScore(Grilla, Columnas, Camino, Square) :-
 
 join(Grid, NumOfColumns, Path, RGrids):-
 	Grid = [_N | _Ns],
-	generacionPrimerasGrillas(Grid, NumOfColumns, Path, Parcial),
-	RGrids = Parcial. %TODO: final
+	generacionPrimerasGrillas(Grid, NumOfColumns, Path, [Grilla1,Grilla2]),
+	generacionSegundasGrillas(Grilla2, NumOfColumns, GrillaEfectoFinal),
+	RGrids = [Grilla1,Grilla2,GrillaEfectoFinal]. %TODO: final
 	%TODO: append la tercer grilla correspondiente a la segunda parte de la animación a RGrids
 
 %factorización del código que genera la primera parte del efecto
@@ -60,6 +61,81 @@ listaPosiciones([X| Xs], NumColumns, Posiciones) :-
 	posicionEnLista(X, NumColumns, Pos),
 	listaPosiciones(Xs, NumColumns, SubListaPosiciones),
 	insertarInicio(SubListaPosiciones, Pos, Posiciones).
+
+/* Generación segunda parte del efecto (Aplicar gravedad e insertar nuevas celdas en Grilla))*/
+
+%factorización del código que genera la segunda parte del efecto
+generacionSegundasGrillas(Grid, NumOfColumns, GrillaEfectoFinal):-
+    listas_columnas(Grid, NumOfColumns, ListaColumnas),
+    findall(ListasGravedad,(member(ListSinG,ListaColumnas),efecto_gravedad_columna(ListSinG,ListasGravedad)),ListasColumnasGravedadAp),
+    invertir(ListasColumnasGravedadAp, ListaOrdenada),
+    obtener_grilla_de_columnas(ListaOrdenada, GrillaEfectoFinal).
+
+%listas_columnas(+Grid, +NumOfColumns, -ListaColumn)
+%obtiene una lista ListaColumn que contiene las listas de los elementos de cada columna
+listas_columnas(Grid, NumOfColumns, ListaColumn):-
+    grillaPosiciones(Grid,0,0,NumOfColumns,GridPos),
+    lista_numeros(NumOfColumns,Columnas),
+    findall(List,(member(C,Columnas),lista_columna(C,NumOfColumns,Grid,GridPos,List)),ListaColumn).
+
+%lista_columna(+Num, +NumOfColumns, +Grid, +GridPos, -Lista)
+%obtiene una lista Lista que contiene los elementos de la columna Num
+lista_columna(Num, NumOfColumns, Grid, GridPos, Lista):-
+    findall(Elem,(member([X,Num],GridPos), elemento_de_Grid(Grid, NumOfColumns, X, Num, Elem)),Lista).
+
+%efecto_gravedad_columna(+List, -ListEfectoGravedad)
+%obtiene una lista ListEfectoGravedad que se le aplico el efecto de gravedad
+efecto_gravedad_columna(List, ListEfectoGravedad):-
+    lista_ceros(List,ListCeros),
+    lista_no_ceros(List,ListNoCeros),
+    concatenar(ListCeros,ListNoCeros, ListEfectoGravedad).
+
+%obtener_grilla_de_columnas(+ListaColumn, -Grid)
+%obtiene una grilla Grid conformada por las columnas de ListaColumn
+obtener_grilla_de_columnas(ListaColumn, Grid):-
+    member(L,ListaColumn), !,
+    length(L, N),
+    listas_filas(ListaColumn, N, L2),
+    invertir(L2, ListaFilas),
+    concatenar_listas_de_listas(ListaFilas, Grid).
+
+%listas_filas(+ListaColumn, +N, -ListasF)
+%obtiene la lista ListasF que contiene listas de las filas a partir de ListaColumn
+listas_filas(_, 0, []).
+listas_filas(L1, N, [H|T]) :-
+    lista_fila(L1, N, H),
+    N1 is N - 1,
+    listas_filas(L1, N1, T), !.
+
+%lista_fila(+ListaColumn, +N, -ListaF)
+%obtiene la lista ListaF que contiene los elementos de una fila a partir de ListaColumn
+lista_fila([], _, []).
+lista_fila([H|T], N, []) :-
+    length(H, M),
+    M < N,
+    lista_fila(T, N, []).
+lista_fila([H|T], N, [E|L]) :-
+    nth1(N, H, E),
+    lista_fila(T, N, L).
+
+%grillaPosiciones(+Grid, +F, +C, +NumOfColumns, -GridPos)
+%obtiene la grilla GridPos que contiene todas las pos del estilo [X,Y] que Grid tiene
+grillaPosiciones([],_F, _C, _NumOfColumns, []).
+grillaPosiciones([_G|GS], F, C, NumOfColumns, [[F,C]|XS]):-
+   C < NumOfColumns,
+   NC is C + 1,
+   grillaPosiciones(GS, F, NC, NumOfColumns, XS), !.
+grillaPosiciones([_G|GS], F, C, NumColumns, [[F,C]|XS]):-
+   C is NumColumns - 1,
+   NF is F + 1,
+   grillaPosiciones(GS, NF, 0, NumColumns, XS).
+
+%elemento_de_Grid(+GridList, +NumColumns, +X, +Y, -Element) 
+%obtiene el elemento que se encuentra la pos [X,Y] en la grilla GridList
+elemento_de_Grid(GridList, NumColumns, X, Y, Element) :-
+    nth0(Index, GridList, Element),
+    X is div(Index, NumColumns),
+    Y is mod(Index, NumColumns).
 
 /*------------------------------------ yep -------------------------------------*/
 boosterIguales(Grilla, Columnas, GrillaBoosterAplicado) :-
