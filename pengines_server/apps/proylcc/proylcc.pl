@@ -22,9 +22,9 @@ squareScore(Grilla, Columnas, Camino, Square) :-
 
 join(Grid, NumOfColumns, Path, RGrids):-
 	Grid = [_N | _Ns],
-	generacionPrimerasGrillas(Grid, NumOfColumns, Path, [Grilla1,Grilla2]),
-	generacionSegundasGrillas(Grilla2, NumOfColumns, GrillaEfectoFinal),
-	RGrids = [Grilla1,Grilla2,GrillaEfectoFinal]. %TODO: final
+	generacionPrimerasGrillas(Grid, NumOfColumns, Path, [Grilla1, Grilla2]),
+	generacionSegundasGrillas(Grilla2, NumOfColumns, [Grilla3, Grilla4]),
+	RGrids = [Grilla1, Grilla2, Grilla3, Grilla4]. %TODO: final
 	%TODO: append la tercer grilla correspondiente a la segunda parte de la animación a RGrids
 
 %factorización del código que genera la primera parte del efecto
@@ -69,7 +69,9 @@ generacionSegundasGrillas(Grid, NumOfColumns, GrillaEfectoFinal):-
     listas_columnas(Grid, NumOfColumns, ListaColumnas),
     findall(ListasGravedad,(member(ListSinG,ListaColumnas),efecto_gravedad_columna(ListSinG,ListasGravedad)),ListasColumnasGravedadAp),
     invertir(ListasColumnasGravedadAp, ListaOrdenada),
-    obtener_grilla_de_columnas(ListaOrdenada, GrillaEfectoFinal).
+    obtener_grilla_de_columnas(ListaOrdenada, GrillaEfectoGravedad),
+    generacion_nuevas_celdas(GrillaEfectoGravedad, GrillaCeldasNuevas),
+    GrillaEfectoFinal = [GrillaEfectoGravedad,GrillaCeldasNuevas].
 
 %listas_columnas(+Grid, +NumOfColumns, -ListaColumn)
 %obtiene una lista ListaColumn que contiene las listas de los elementos de cada columna
@@ -136,6 +138,23 @@ elemento_de_Grid(GridList, NumColumns, X, Y, Element) :-
     nth0(Index, GridList, Element),
     X is div(Index, NumColumns),
     Y is mod(Index, NumColumns).
+
+/*---------------------nuevos celdas aleatorias---------------------------------*/
+
+%generacion_nuevas_celdas(+Grilla, -GrillaCompleta)
+%obtiene una grilla GrillaCompleta a partir de Grilla, elementos 0 en Grilla tienen otros valores en GrillaCompleta
+generacion_nuevas_celdas([],[]).
+generacion_nuevas_celdas([X|XS], [X|XSS]):-
+    X \= 0,
+    generacion_nuevas_celdas(XS,XSS).
+generacion_nuevas_celdas([0|XS], [X|XSS]):-
+    generar_valor_random(X),
+    generacion_nuevas_celdas(XS,XSS).
+
+%generar_valor_random(-X)
+%obtiene un número random entre 2, 4, 28, 16, 32 y 64
+generar_valor_random(X):-
+    random_member(X,[2,4,8,16,32,64]).
 
 /*------------------------------------ yep -------------------------------------*/
 boosterIguales(Grilla, Columnas, GrillaBoosterAplicado) :-
