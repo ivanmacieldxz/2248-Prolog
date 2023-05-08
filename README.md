@@ -1,6 +1,6 @@
-# Tic tac toe en React + Prolog
+# 2248 en React + Prolog
 
-Implementación de un tic-tac-toe interactivo, usando React del lado del cliente, y Prolog del lado del servidor.
+Implementación del juego 2248, usando React del lado del cliente, y Prolog del lado del servidor.
 
 ## Para correr el proyecto
 

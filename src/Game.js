@@ -44,15 +44,17 @@ function Game() {
       return;
     }
 
+    
     if (newPath.length > 1) {
       //código de la consulta a sv prolog
       const gridS = JSON.stringify(grid);
       const pathS = JSON.stringify(newPath);
-      const queryS = "squareScore(" + gridS + "," + numOfColumns + "," + pathS + ", Square)";
+      const queryS = "preview(" + gridS + "," + numOfColumns + "," + pathS + ", Prev)";
 
       pengine.query(queryS, (success, response) => {
         if (success) {
-          mostrarResultadoParcial(response.Square);
+          console.log(response);
+          mostrarResultadoParcial(response.Prev);
         }
       });
     } else {
@@ -119,7 +121,7 @@ function Game() {
   }
 
   function mostrarResultadoParcial(puntajeParcial) {
-    let celdaPuntaje = document.querySelector(".footer .square");
+    let celdaPuntaje = document.querySelector(".previewBanner .square");
 
     if (puntajeParcial !== 0) {
       celdaPuntaje.innerText = puntajeParcial;
@@ -132,18 +134,24 @@ function Game() {
   }
 
   function colapsarIguales() {
-    const gridS = JSON.stringify(grid);
-    const queryS = "boosterIguales(" + gridS + "," + numOfColumns + ", NuevaMatriz)";
-    setWaiting(true);
-    pengine.query(queryS, (success, response) => {
-      if (success) {
-        animateEffect(response['NuevaMatriz']);
-        //console.log(response.NuevaMatriz);
-        //setWaiting(false);
-      } else {
-        setWaiting(false);
-      }
-    });
+
+    if(!waiting) {
+
+      const gridS = JSON.stringify(grid);
+      const queryS = "boosterIguales(" + gridS + "," + numOfColumns + ", GrillasBooster)";
+      setWaiting(true);
+      pengine.query(queryS, (success, response) => {
+        if (success) {
+          animateEffect(response['GrillasBooster']);
+          //console.log(response.NuevaMatriz);
+          //setWaiting(false);
+        } else {
+          setWaiting(false);
+        }
+      });
+
+    }
+
   }
 
   if (grid === null) {
@@ -151,6 +159,14 @@ function Game() {
   }
   return (
     <div className="game">
+      <div className='previewBanner'>
+        <Square
+          value={0}
+          onClick={() => {}}
+          onMouseEnter={() => {}}
+          className={""}
+        />
+      </div>
       <div className="header">
         <div className="score">{score}</div>
       </div>
@@ -162,14 +178,8 @@ function Game() {
         onDone={onPathDone}
       />
       <div className='footer'>
-        <Square
-          value={0}
-          onClick={() => {}}
-          onMouseEnter={() => {}}
-          className={""}
-        />
         <Booster
-          value={"C"}
+          value={"Colapsar Iguales"}
           onClick={colapsarIguales}
         />
       </div>

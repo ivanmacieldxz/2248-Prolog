@@ -3,7 +3,7 @@ import React from 'react';
 function Booster({ value, onClick }) {
     return (
         <div
-            className='square booster'
+            className='booster'
             onClick={onClick}
         >
             {value}

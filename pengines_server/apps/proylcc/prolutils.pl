@@ -17,12 +17,15 @@
         esBordeInf/3,
         esBordeInfDer/3,
         esBordeIzq/3,
+        esBordeSup/3,
         concatenar_listas_de_listas/2,
         concatenar/3,
         invertir/2,
         lista_no_ceros/2,
         lista_ceros/2,
-        lista_numeros/2
+        lista_numeros/2,
+        esta/2
+        
     ]).
 
 %largo de una lista
@@ -96,6 +99,9 @@ esBordeDer(Pos, _Grilla, Columnas) :-
 
 esBordeIzq(Pos, _Grilla, Columnas) :-
     (Pos mod Columnas) =:= 0.
+
+esBordeSup(Pos, _Grilla, Columnas) :-
+    Pos < Columnas.
 
 /*
 [0, 4, 64, 32, 16,
@@ -181,3 +187,7 @@ concatenar_listas_de_listas([], []).
 concatenar_listas_de_listas([X|XS], Grid):-
     concatenar_listas_de_listas(XS, Grid1),
     concatenar(X, Grid1, Grid).
+
+esta(X, [X|_T]).
+esta(X, [_|T]) :-
+    esta(X, T).

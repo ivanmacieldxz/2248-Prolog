@@ -7,6 +7,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .header {
@@ -17,7 +18,26 @@ body {
   width: 100%;
 }
 
+.previewBanner {
+  width: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: -20px;
+}
+
+.previewBanner .square {
+  transition: 0.1s ease-in;
+  min-width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .footer {
+  padding: 15px;
   border-top: 1px solid lightgray;
   display: flex;
   align-items: center;
@@ -25,14 +45,14 @@ body {
   width: 100%;
 }
 
-.footer .square {
-  transition: 0.1s ease-in;
-  width: 70px;
-  height: 70px;
-  margin: 15px;
-}
-
 .footer .booster {
+  box-sizing: border-box;
+  font-size: 16px;
+  height: 70px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background-color: aquamarine;
   color: rgb(15, 73, 182);
   border: 3px solid;

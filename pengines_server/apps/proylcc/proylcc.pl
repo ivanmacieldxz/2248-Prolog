@@ -5,59 +5,103 @@
 
 :-use_module(proylcc:prolutils).
 
+/**
+ * preview(+Grilla, +Columnas, +Camino, -Prev)
+ * -Prev es el valor del cuadrado que se colocaría en la grilla Grilla al final del camino Camino si se 
+ * terminara el camino en ese momento. Columnas representa la cantidad de columnas de la grilla.
+ */
+preview(Grilla, Columnas, Camino, Prev) :-
+	listaPosiciones(Camino, Columnas, ListaPos),
+	squareScore(Grilla, ListaPos, Prev).
+
+/**
+ * squareScore(+Grilla, +Camino, -Square)
+ * Square es el valor de la menor potencia de 2 que supera o iguala la sumatoria de los valores de las 
+ * posiciones del camino Camino en la grilla Grilla.
+ * Camino es una lista de elementos donde cada elemento es una posición de la grilla en formato de lista, 
+ * en lugar de en formato de matriz, es decir, es de la forma [x, y, z, |Ps] en lugar de 
+ * [[x, y], [x1, y2] | Ps]
+ */
+squareScore(Grilla, Camino, Square) :-
+	%obtengo los valores de las posiciones del camino en la grilla
+	sublista(Camino, Grilla, ListaValoresCamino),
+	%obtengo el puntaje a partir los valores de la lista que conforman el camino
+	sumatoria(ListaValoresCamino, PuntajeParcial),
+	menorP2MayorX(PuntajeParcial, Square).
 
 /**
  * join(+Grid, +NumOfColumns, +Path, -RGrids) 
  * RGrids es la lista de grillas representando el efecto, en etapas, de combinar las celdas del camino Path
  * en la grilla Grid, con número de columnas NumOfColumns. El número 0 representa que la celda está vacía. 
  */ 
-
-squareScore(Grilla, Columnas, Camino, Square) :-
-	%obtengo la lista de posiciones del camino y los valores de esas posiciones en la grilla
-	listaPosiciones(Camino, Columnas, ListaPos),
-	sublista(ListaPos, Grilla, ListaValoresCamino),
-	%obtengo el puntaje a partir los valores de la lista de celdas que conforman el camino
-	sumatoria(ListaValoresCamino, PuntajeParcial),
-	menorP2MayorX(PuntajeParcial, Square).
-
 join(Grid, NumOfColumns, Path, RGrids):-
-	Grid = [_N | _Ns],
+	% genero las primeras dos grillas del efecto
 	generacionPrimerasGrillas(Grid, NumOfColumns, Path, [Grilla1, Grilla2]),
+	% genero las últimas dos grillas del efecto: donde la primera representa el efecto de gravedad aplicado
+	% y la segunda rellena las posiciones vacías con valores
 	generacionSegundasGrillas(Grilla2, NumOfColumns, [Grilla3, Grilla4]),
-	RGrids = [Grilla1, Grilla2, Grilla3, Grilla4]. %TODO: final
-	%TODO: append la tercer grilla correspondiente a la segunda parte de la animación a RGrids
+	RGrids = [Grilla1, Grilla2, Grilla3, Grilla4].
 
-%factorización del código que genera la primera parte del efecto
-generacionPrimerasGrillas(Grilla, Columnas, Camino, GrillaResultante) :-
-	%obtengo la lista de posiciones del camino y las celdas que representan como una lista
+
+/**
+ * generacionPrimerasGrillas(+Grilla, +Columnas, +Camino, -GrillasResultantes)
+ * GrillasResultantes es una lista conformada por dos listas, que representan dos grillas donde la primera 
+ * se corresponde con la grilla original Grilla, pero con las celdas del camino Camino eliminadas y la segunda 
+ * se corresponde con la primer grilla pero con la celda final del camino Camino reemplazada por el 
+ * valor correspondiente. Camino es una lista de posiciciones con formato [x, y] (formato matricial, no de lista)
+ */
+generacionPrimerasGrillas(Grilla, Columnas, Camino, GrillasResultantes) :-
+	% obtengo la lista de posiciones del camino
 	listaPosiciones(Camino, Columnas, ListaPos),
-	reemplazarPorVacio(ListaPos, Grilla,GrillaConCeldasVacias),
-	reemplazoCeldaFinCamino(GrillaConCeldasVacias, Grilla, Columnas, Camino, GrillaCeldaFinReemplazada),
-	GrillaResultante = [GrillaConCeldasVacias, GrillaCeldaFinReemplazada].
+	% genero las dos grillas correspondientes del efecto, a partir de la lista de posiciones
+	grillasCaminoReemplazado(ListaPos, Grilla, GrillasResultantes).
 
+/**
+ * reemplazarPorVacio(+ListaPosiciones, +Grilla, -GrillaConCeldasVacias)
+ * GrillaConCeldas vacías es una lista que representa una grilla igual que la grilla original Grilla, pero 
+ * en la que las posiciones de la lista ListaPosiciones fueron eliminadas.
+ */
 reemplazarPorVacio([], Grilla, Grilla).
-reemplazarPorVacio([P| RestoListaPos], Grilla, GrillaConCeldasVacias) :-
+reemplazarPorVacio(ListaPosiciones, Grilla, GrillaConCeldasVacias) :-
+	ListaPosiciones = [P| RestoListaPos],
+	% reemplazo la posición actual P por 0, equivalente a eliminar la celda
 	reemplazarPos(P, 0, Grilla, GrillaConAlgunosVacios),
+	% hago lo mismo para el resto de posiciones en la lista, a partir de la grilla con la celda P eliminada
 	reemplazarPorVacio(RestoListaPos, GrillaConAlgunosVacios, GrillaConCeldasVacias).
 
-reemplazoCeldaFinCamino(GrillaConCeldasVacias, GrillaOriginal, Columnas, Camino, GrillaResultante) :-
+/**
+ * reemplazoCeldaFinCamino(+GrillaConCeldasVacias, +GrillaOriginal, +Camino, -GrillaResultante)
+ * GrillaResultante es la grilla GrillaConCeldasVacias, pero con la última posición de la lista de posiciones 
+ * Camino reemplazada por la menor potencia de dos mayor o igual a la sumatoria de los valores contenidos en 
+ * las celdas del camino en la grilla original (sin posiciones eliminadas) GrillaOriginal.
+ */
+reemplazoCeldaFinCamino(GrillaConCeldasVacias, GrillaOriginal, Camino, GrillaResultante) :-
 	%obtengo el puntaje, reutilizando la función actualSquare
-	squareScore(GrillaOriginal, Columnas, Camino, Puntaje),
+	squareScore(GrillaOriginal, Camino, Puntaje),
 	%accedo al último elemento del camino (representa la celda de la grilla en la que terminó)
 	longitud(Camino, LargoCamino),
 	nth1(LargoCamino, Camino, CeldaPuntaje),
-	%accedo a la celda de la grilla en la que terminó el recorrido
-	posicionEnLista(CeldaPuntaje, Columnas, Pos),
-	reemplazarPos(Pos, Puntaje, GrillaConCeldasVacias, GrillaResultante).
+	% reemplazo esa posición por el valor correspondiente al puntaje
+	reemplazarPos(CeldaPuntaje, Puntaje, GrillaConCeldasVacias, GrillaResultante).
 
 
-%posición del elemento de la grilla en la lista
+/**
+ * posicionEnLista([I, J], NumColumns, Z)
+ * [I, J] es una lista correspondiente a la posición de un elemento en una matriz de NumColumns
+ * Z representa la posicion de ese par si perteneciera a una lista (posición en formato de lista en lugar de formato matricial)
+ */
 posicionEnLista([I, J], NumColumns, Z) :-
     Z is I * NumColumns + J.
 
 %lista de posiciones de una grilla de NumColumns columnas si estuviese representada como lista
+/**
+ * listaPosiciones(+ListaPosicionesMatricial, +NumColumns, -Posiciones)
+ * Posiciones es la lista de posiciones en formato de lista que se corresponde con la lista de posiciones en formato 
+ * matricial ListaPosicionesMatricial, en una grilla de NumColumns columnas.
+ */
 listaPosiciones([], _, []).
-listaPosiciones([X| Xs], NumColumns, Posiciones) :-
+listaPosiciones(ListaPosicionesMatricial, NumColumns, Posiciones) :-
+	ListaPosicionesMatricial = [X| Xs],
 	posicionEnLista(X, NumColumns, Pos),
 	listaPosiciones(Xs, NumColumns, SubListaPosiciones),
 	insertarInicio(SubListaPosiciones, Pos, Posiciones).
@@ -156,67 +200,213 @@ generacion_nuevas_celdas([0|XS], [X|XSS]):-
 generar_valor_random(X):-
     random_member(X,[2,4,8,16,32,64]).
 
-/*------------------------------------ yep -------------------------------------*/
-boosterIguales(Grilla, Columnas, GrillaBoosterAplicado) :-
-    length(Grilla, LargoGrilla),
-    UltimoIndice is LargoGrilla - 1,
-    listaListasPosicionesRevisar(UltimoIndice, Grilla, Columnas, ListaListasPosiciones),
-    listaPosicionesReemplazar(UltimoIndice, Grilla, ListaListasPosiciones, PosicionesReemplazar),
-    reemplazoCero(Grilla, PosicionesReemplazar, GrillaReemplazada),
-	GrillaBoosterAplicado = [GrillaReemplazada].
+/*------------------------------------ Efecto booster -------------------------------------*/
+/**
+ * boosterIguales(+Grilla, +Columnas, -Grillas)
+ * Aplica a la grilla Grilla con Columnas número de columnas el efecto Booster.
+ * Grillas es una lista de Grillas que en conjunto conforman el efecto del Booster.
+ * Por cada camino eliminado se añaden dos grillas a grillas, la primera representando la eliminación 
+ * del camino y la segunda representa el camino eliminado pero con la celda de más abajo a la derecha 
+ * reemplazada por el número correspondiente a la menor potencia de dos mayor o igual a la sumatoria 
+ * de los valores del camino.
+ */
+boosterIguales(Grilla, Columnas, Grillas) :-
+    %todos los caminos que el jugador podría formar
+    listadoCaminos(Grilla, Columnas, PreListadoBooster),
+    %elimino los caminos redundantes
+    eliminarSubcaminos(PreListadoBooster, PreListadoBooster, ListadoBooster),
+    %obtengo las grillas de la animación del efecto
+    grillasEfectoBooster(Grilla, Columnas, ListadoBooster, GrillasBoosterAplicado),
+	%obtengo la grilla final del efecto del booster
+	length(GrillasBoosterAplicado, LBoostAp),
+	nth1(LBoostAp, GrillasBoosterAplicado, UltimaGrillaBooster),
+	%y la uso como base para aplicarle el efecto de gravedad
+	generacionSegundasGrillas(UltimaGrillaBooster, Columnas, GrillaEfectoFinal),
+	%finalmente, agrego las grillas del efecto de gravedad
+	append(GrillasBoosterAplicado, GrillaEfectoFinal, Grillas).
 
-listaListasPosicionesRevisar(0, Grilla, Columnas, Lista) :-
-    listaPosicionesRevisar(0, Grilla, Columnas, ListaPos0),
-    Lista = [ListaPos0].
-listaListasPosicionesRevisar(PosActual, Grilla, Columnas, Lista) :-
-    listaPosicionesRevisar(PosActual, Grilla, Columnas, ListaPosActual),
-    PosSig is PosActual - 1,
-    listaListasPosicionesRevisar(PosSig, Grilla, Columnas, ListaParcial),
-    insertarFinal(ListaParcial, ListaPosActual, Lista).
+/**
+ * listadoCaminos(+Grilla, +Columnas, -Listado)
+ * Listado es el listado de caminos conformables en la grilla, partiendo por la casilla inferior 
+ * derecha de la grilla Grilla, de Columnas número de columnas. Cada camino es una lista de posiciones.
+ */
+listadoCaminos(Grilla, Columnas, Listado) :-
+	%obtengo la longitud de la grilla
+    length(Grilla, LGrilla),
+    PosInicial is LGrilla - 1,
+	%empiezo a conformar los caminos desde la última posición
+    listadoCaminosRec(PosInicial, Grilla, Columnas, Listado).
 
-listaPosicionesRevisar(Pos, Grilla, Columnas, Lista) :-
+/**
+ * listadoCaminosRec(+Pos, +Grilla, +Columnas, -Listado)
+ * Listado es una lista que contiene todos los posibles caminos a formar en la grilla Grilla, de Columnas número de 
+ * columnas, iniciando por la posición Pos y recorriendo todas las posiciones hasta llegar a la primera.
+ * Listado contiene caminos que son subcaminos de otros, pero no caminos conformados por una única posición
+ */
+listadoCaminosRec(0, _, _, []).
+listadoCaminosRec(Pos, Grilla, Columnas, Listado) :-
+    %formo el camino para la posición actual
+    camino(Pos, Grilla, Columnas, CaminoPos),
+    %paso al siguiente camino
+    PosSig is Pos - 1,
+    listadoCaminosRec(PosSig, Grilla, Columnas, ListadoSinPos),
+    (   
+        %si no es un camino unitario, lo añado a la lista
+    	length(CaminoPos, 1) ->  
+    	append(ListadoSinPos, [], Listado);
+    	append(ListadoSinPos, [CaminoPos], Listado)
+    ).
+
+/**
+ * eliminarSubcaminos(+ListaCaminos, +ListaOriginal, -SinSubcaminos)
+ * SinSubcaminos es la lista de caminos posibles, producto de eliminar los caminos que son subcaminos de otros de 
+ * ListaCaminos. ListaOriginal es la lista original, con todos los subcaminos posibles, que se utiliza de referencia.
+ */
+% el parámetro ListaOriginal es importante, porque a pesar de que no se utiliza en la recursión, es utilizado en el caso base
+eliminarSubcaminos([], ListaOriginal, ListaOriginal).
+eliminarSubcaminos(ListaCaminos, ListaOriginal, SinSubcaminos) :-
+    ListaCaminos = [Camino|RestoCaminos],
+    eliminarSubcaminos(RestoCaminos, ListaOriginal, CasiSinSubcaminos),
+    eliminarSubcamino(Camino, CasiSinSubcaminos, RestoCaminos, SinSubcaminos).
+
+/**
+ * eliminarSubcamino(+Camino, +ListaOriginal, +ListaCaminosRevisar, -ListaSinSubcamino)
+ * ListaSinSubcamino es la lista de caminos ListaOriginal sin el camino Camino, si este resulta ser un subcamino que se encuentra 
+ * en la ListaCaminosRevisar. Notar que ListaCaminosRevisar es igual a ListaOriginal en la primera llamada cuando se llama desde 
+ * fuera.
+ */
+% al igual que en eliminar_subcaminos, ListaOriginal se utiliza en el caso base
+eliminarSubcamino(_, ListaOriginal, [], ListaOriginal).
+eliminarSubcamino(Camino, ListaOriginal, ListaCaminosRevisar, ListaSinSubcamino) :-
+    ListaCaminosRevisar = [SuperCamino|_],
+    %P es donde termina el subcamino en realidad (elemento de más abajo a la derecha)
+    Camino = [P|_Ps],
+    %entonces si P aparece en alguno de los otros caminos, en esta llamada, en camino, significa que Camino es un subcamino
+    esta(P, SuperCamino) ->  
+    %entonces lo elimino de la lista y termino la recursión
+    select(Camino, ListaOriginal, ListaSinSubcamino);
+    ListaCaminosRevisar = [_|RestoCaminos],
+    %si no aparece, trato de buscarlo en el resto de caminos
+    eliminarSubcamino(Camino, ListaOriginal, RestoCaminos, ListaSinSubcamino).
+
+/**
+ * grillasEfectoBooster(+Grilla, +Columnas, +ListadoBooster, -Grillas)
+ * Grillas es una lista de grillas conformada las Grillas que conforman el efecto aplicado a la grilla Grilla de Columnas 
+ * cantidad de columnas a partir de la lista de caminos ListadoBooster formado por el boster.
+ * Grillas se conforma por 2 grillas por cada camino formado por el efecto, siendo la primera de las grillas correspondiente 
+ * al camino eliminado y la segunda al camino eliminado con la posición de más abajo a la derecha reemplazada por el valor 
+ * correspondiente.
+ * Después del primer par, el resto de los pares se forman de manera incremental a partir de la última grilla de los pares 
+ * anteriores, es decir:
+ * - la grilla primera de las grillas correspondientes al segundo camino tendrá el camino de más arriba a la izquierda con 
+ *   sus celdas eliminadas y la última reemplazada y este segundo camino con las celdas eliminadas.
+ * - la segunda grilla del segundo camino tendrá la todo lo de la anterior, más la posición de más abajo a la izquierda 
+ *   reemplazada por el valor correspondiente.
+ * Y así sucesivamente, hasta la última de las grillas (primera del ListadoBooster, en realidad)
+ */
+grillasEfectoBooster(Grilla, _Columnas, [], [Grilla]).
+grillasEfectoBooster(Grilla, Columnas, ListadoBooster, Grillas) :-
+    ListadoBooster = [Camino|RestoCaminos],
+    %invierto al camino, dado que grillasCaminoReemplazado asume que la posición en la que termina el camino es la última 
+    %y en la lista recibida por parámetro está al principio
+    invertir(Camino, CaminoCeldaPuntajeAlFinal),
+    %obtengo las grillas del camino
+    grillasCaminoReemplazado(CaminoCeldaPuntajeAlFinal, Grilla, [GrillaSinCamino, GrillaFinCaminoReemplazado]),
+    %utilizo la última de las grillas como referencia para continuar la recursión
+    grillasEfectoBooster(GrillaFinCaminoReemplazado, Columnas, RestoCaminos, GrillasSinPrimerCamino),
+    %añado a la primera de las grillas que formé, el resto de las grillas
+    append([GrillaSinCamino], GrillasSinPrimerCamino, Grillas).
+
+/**
+ * grillasCaminoReemplazado(+Camino, +Grilla, -ParDeGrillas)
+ * Retorna Par de grillas como una lista compuesta de dos grillas, donde la primera se corresponde con el camino Camino 
+ * eliminado de la grilla Grilla y la segunda se corresponde con la primera pero con la celda del final del camino 
+ * reemplazada por la menor potencia de dos mayor o igual a la sumatoria de los valores de las posiciones que conforman
+ * el camino en la grilla.
+ */
+grillasCaminoReemplazado(Camino, Grilla, ParDeGrillas) :-
+    reemplazarPorVacio(Camino, Grilla, GrillaConCeldasVacias),
+	reemplazoCeldaFinCamino(GrillaConCeldasVacias, Grilla, Camino, GrillaCeldaFinReemplazada),
+    ParDeGrillas = [GrillaConCeldasVacias, GrillaCeldaFinReemplazada].
+
+
+% obtengo la lista de posiciones que conforman el camino de posiciones con mismo valor que posX en la grilla
+% ListaPosicionesRevisadas es la lista de posiciones revisadas en la grilla hasta el momento y
+% ListaPosicionesRevisadasAlFinal es la lista de posiciones revisadas después de formar el camino
+% (incluye las posiciones del camino)
+/**
+ * camino(+PosX, +Grilla, +Columnas, -ListaPosCamino)
+ * ListaPosCamino es la lista de posiciones que conforman el camino arrancando por PosX, en la grilla de Columnas 
+ * cantidad de columnas.
+ */
+camino(PosX, Grilla, Columnas, ListaPosCamino) :-
+	%obtengo la lista de adyacentes (siempre son posiciones anteriores a posX)
+    listaAdyacentes(PosX, Grilla, Columnas, ListaAdyacentes),
+    %añado x a la lista del camino, asegurándome que la posición de más abajo a la derecha quede primera
+    ListaParcial = [PosX],
+    %conformo el camino verificando cada adyacente
+    caminoRec(PosX, Grilla, Columnas, ListaAdyacentes, ListaParcial, ListaPosCamino).
+
+/**
+ * caminoRec(+PosX, +Grilla, +Columnas, +ListaAdyacentes, +ListaCaminoActual, -ListaPosCamino)
+ * ListaPosCamino es la lista de posiciones que conforman el camino que comienza en PosX en la grilla Grilla, de 
+ * Columnas numero de columnas, a partir de su lista de posiciones adyacentes ListaAdyacentes continuando el camino 
+ * de ListaCaminoActual.
+ */
+caminoRec(_PosX, _Grilla, _Columnas, [], ListaCaminoActual, ListaCaminoActual).
+caminoRec(PosX, Grilla, Columnas, ListaAdyacentes, ListaCaminoActual, ListaPosCamino) :-
+    ListaAdyacentes = [A|As],
+    %obtengo el valor de PosX en la grilla
+    nth0(PosX, Grilla, ValorPosX),
+    %obtengo el valor de A en la grilla
+   	nth0(A, Grilla, ValorPosA),
+    (
+    	%si los valores coinciden
+    	ValorPosX is ValorPosA, not(esta(A, ListaCaminoActual)) ->  
+    	%obtengo la lista de adyacentes
+    	listaAdyacentes(A, Grilla, Columnas, ListaAdyacentesA),
+        %añado A a la lista del camino, si no está
+    	(
+        	esta(A, ListaCaminoActual) ->  
+        	append(ListaCaminoActual, [], ListaParcialConA);
+            append(ListaCaminoActual, [A], ListaParcialConA)
+        ),
+        %verifico cada adyacente
+    	caminoRec(A, Grilla, Columnas, ListaAdyacentesA, ListaParcialConA, SubcaminoDesdeA),
+        CaminoParcial = SubcaminoDesdeA;
+    	%sino sigo con la recursión con el camino actual
+    	CaminoParcial = ListaCaminoActual
+    ),
+    caminoRec(PosX, Grilla, Columnas, As, CaminoParcial, ListaPosCamino).
+
+/**
+ * listaAdyacentes(+Pos, +Grilla, +Columnas, -Lista)
+ * Lista es la lista de posiciones adyacentes a la posición Pos en la grilla Grilla de Columnas cantidad de 
+ * columnas.
+ */
+listaAdyacentes(Pos, Grilla, Columnas, Lista) :-
     length(Grilla, Long),
     Pos >= 0,
     Pos < Long,
-    PosD is Pos + 1,
-    PosA is Pos + Columnas,
+    %Calculo las posiciones adyacentes que me podrían llegar a interesar
+    PosI is Pos - 1,
+    PosA is Pos - Columnas,
     PosDA is PosA + 1,
     PosIA is PosA - 1,
+    PosIAb is PosI + Columnas,
+    %añado las correspondientes, según la ubicación de pos en la grilla
     (
-    	esBordeInfDer(Pos, Grilla, Columnas) ->
+    	Pos is 0 ->
     	Lista = [];
-        esBordeInf(Pos, Grilla, Columnas) ->
-        Lista = [PosD];
-    	esBordeDer(Pos, Grilla, Columnas) ->  
-        Lista = [PosIA, PosA];
-    	esBordeIzq(Pos, Grilla, Columnas) ->
-        Lista = [PosD, PosA, PosDA];
-    	Lista = [PosD, PosIA, PosA, PosDA]
+        esBordeSup(Pos, Grilla, Columnas) ->
+        Lista = [PosIAb, PosI];
+    	esBordeIzq(Pos, Grilla, Columnas) ->  
+        Lista = [PosDA, PosA];
+    	esBordeInfDer(Pos, Grilla, Columnas) ->  
+    	Lista = [PosI, PosA, PosIA];
+    	esBordeDer(Pos, Grilla, Columnas) ->
+        Lista = [PosIAb, PosI, PosA, PosIA];
+    	esBordeInf(Pos, Grilla, Columnas) ->  
+    	Lista = [PosI, PosDA, PosA, PosIA];
+    	Lista = [PosIAb, PosI, PosDA, PosA, PosIA]
     ).
-
-listaPosicionesReemplazar(-1, _, _, []).
-listaPosicionesReemplazar(Inicio, Grilla, ListaListasPosicionesRevisar, ListaFinal) :-
-    Inicio >= 0,
-    Sig is Inicio - 1,
-    listaPosicionesReemplazar(Sig, Grilla, ListaListasPosicionesRevisar, ListaSinInicio),
-    nth0(Inicio, ListaListasPosicionesRevisar, ListaPosicionesRevisarInicio),
-    listaReemplazar(Inicio, Grilla, ListaPosicionesRevisarInicio, ListaDeInicio),
-    append(ListaSinInicio, ListaDeInicio, ListaFinal).
-
-%si la lista de posiciones a revisar está vacía, la lista resultante de posiciones a reemplazar es vacía
-listaReemplazar(_Pos, _Grilla, [], []).
-listaReemplazar(Pos, Grilla, [P|RestoPosicionesRevisar], ListaReemplazar) :-
-    listaReemplazar(Pos, Grilla, RestoPosicionesRevisar, ListaParcial),
-    (   
-    	nth0(Pos, Grilla, ElementoEnPos),
-        nth0(P, Grilla, ElementoEnP),
-        ElementoEnPos is ElementoEnP ->  
-    	insertarInicio(ListaParcial, P, ListaParcialSinPos),
-        insertarInicio(ListaParcialSinPos, Pos, ListaReemplazar);
-    	ListaReemplazar = ListaParcial
-    ).
-
-reemplazoCero(Grilla, [], Grilla).
-reemplazoCero(Grilla, [P|RestoPosiciones], GrillaResultante):-
-    reemplazoCero(Grilla, RestoPosiciones, GrillaSemiReemplazada),
-    reemplazarPos(P, 0, GrillaSemiReemplazada, GrillaResultante).
