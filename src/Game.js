@@ -141,7 +141,7 @@ function Game() {
     if(!waiting) {
 
       const gridS = JSON.stringify(grid);
-      const queryS = "boosterIguales(" + gridS + "," + numOfColumns + ", GrillasBooster)";
+      const queryS = "booster_iguales(" + gridS + "," + numOfColumns + ", GrillasBooster)";
       setWaiting(true);
       pengine.query(queryS, (success, response) => {
         if (success) {

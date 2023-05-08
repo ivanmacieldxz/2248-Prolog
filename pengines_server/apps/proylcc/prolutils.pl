@@ -5,19 +5,18 @@
 :- module(prolutils, 
     [
         longitud/2,
-        reemplazarPos/4,
+        reemplazar_pos/4,
         sumatoria/2,
-        logBase2/2,
+        log_base_2/2,
         potencia/3,
-        menorP2MayorX/2,
-        insertarInicio/3,
+        menor_p2_mayor_X/2,
+        insertar_inicio/3,
         sublista/3,
-        insertarFinal/3,
-        esBordeDer/3,
-        esBordeInf/3,
-        esBordeInfDer/3,
-        esBordeIzq/3,
-        esBordeSup/3,
+        es_borde_der/3,
+        es_borde_inf/3,
+        es_borde_inf_der/3,
+        es_borde_izq/3,
+        es_borde_sup/3,
         concatenar_listas_de_listas/2,
         concatenar/3,
         invertir/2,
@@ -35,22 +34,22 @@ longitud([_|T], X) :-
     X is 1 + Y.
 
 
-reemplazarPos(0, X, [_|T], [X|T]) :- !.
-reemplazarPos(N, X, [H|T], [H|T2]) :-
+reemplazar_pos(0, X, [_|T], [X|T]) :- !.
+reemplazar_pos(N, X, [H|T], [H|T2]) :-
     N > 0,
     N1 is N - 1,
-    reemplazarPos(N1, X, T, T2).
+    reemplazar_pos(N1, X, T, T2).
 
 sumatoria([X], X).
 sumatoria([X|Xs], S) :-
     sumatoria(Xs, Y),
     S is X + Y.
 
-logBase2(1,0). 
-logBase2(N,R) :-
+log_base_2(1,0). 
+log_base_2(N,R) :-
     N>1,
     N1 is N//2,
-    logBase2(N1,R1),
+    log_base_2(N1,R1),
     R is R1 +1.
 
 potencia(X,0,1) :- X =\= 0.
@@ -60,18 +59,14 @@ potencia(X,Y,Z) :-
     potencia(X,A,B), 
     Z is B*X.
 
-menorP2MayorX(X, Z) :-
-    logBase2(X, Y),
+menor_p2_mayor_X(X, Z) :-
+    log_base_2(X, Y),
     (potencia(2, Y, Z), X is Z;
     potencia(2, Y+1, Z)).
 
-insertarInicio([], A, [A]).
-insertarInicio([X | Xs], A, [A | Zs]):-
-    insertarInicio(Xs, X, Zs).
-
-insertarFinal([], A, [A]).
-insertarFinal([X | Xs], A, [X | Zs]) :-
-	insertarFinal(Xs, A, Zs).
+insertar_inicio([], A, [A]).
+insertar_inicio([X | Xs], A, [A | Zs]):-
+    insertar_inicio(Xs, X, Zs).
 
 /*
  * Toma como primer parámetro una 
@@ -84,65 +79,24 @@ sublista([], [_| _], []).
 sublista([P|Ps], [X|Xs], Sublista) :-
     nth0(P, [X|Xs], Elem),
     sublista(Ps, [X|Xs], SubSinP),
-    insertarInicio(SubSinP, Elem, Sublista).
+    insertar_inicio(SubSinP, Elem, Sublista).
 
-esBordeInfDer(Pos, Grilla, _Columnas) :- 
+es_borde_inf_der(Pos, Grilla, _Columnas) :- 
     longitud(Grilla, Long),
     Pos is Long - 1.
-esBordeInf(Pos, Grilla, Columnas) :-
+es_borde_inf(Pos, Grilla, Columnas) :-
     longitud(Grilla, Long),
     Pos >= Long - Columnas,
     Pos =< Long - 1.
 
-esBordeDer(Pos, _Grilla, Columnas) :-
+es_borde_der(Pos, _Grilla, Columnas) :-
     (Pos mod Columnas) =:= Columnas - 1.
 
-esBordeIzq(Pos, _Grilla, Columnas) :-
+es_borde_izq(Pos, _Grilla, Columnas) :-
     (Pos mod Columnas) =:= 0.
 
-esBordeSup(Pos, _Grilla, Columnas) :-
+es_borde_sup(Pos, _Grilla, Columnas) :-
     Pos < Columnas.
-
-/*
-[0, 4, 64, 32, 16,
- 0, 0,  0,  2,  0,
- 0, 0,  0,  0,  0,
- 0, 4,  0, 16,  0,
- 0, 0,  0,  0,  0,
- 0,64,  0, 32,  0,
- 0, 0,  0,  0,  0,
- 0, 0,  0, 32,  0]
-
-[0, 4,  0,  0, 16,
- 0, 8, 16,  0,  0,
- 0, 0, 64, 64,  0,
- 0, 0, 32,  0,  0,
- 0, 0,  0,  0,  0,
- 0, 0,  2,  0,  0,
- 0, 0,  0,  0, 64,
- 0, 0,  0, 32,  4]
-
-[
-0,4,64,0,16,
-0,8,16,0,0,
-0,0,0,0,0,
-0,0,32,0,4,
-0,0,0,0,0,
-0,0,0,0,0,
-0,0,0,0,64,
-32,0,0,0,4
-]
-
-[
-0,4,64,0,16,
-0,8,16,0,0,
-0,0,0,0,0,
-0,0,32,0,4,
-0,0,0,0,0,
-0,0,0,0,0,
-0,0,0,0,64,
-32,0,0,0,4
-]*/
 
 %lista_ceros(+L,-ListCeros)
 %obtiene la lista ListCeros que contiene todos los ceros de L
