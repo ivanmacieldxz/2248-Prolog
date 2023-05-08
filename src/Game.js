@@ -86,7 +86,7 @@ function Game() {
           RGrids
         ).
     */
-   mostrarResultadoParcial(0);
+    mostrarResultadoParcial(0);
     const gridS = JSON.stringify(grid);
     const pathS = JSON.stringify(path);
     const queryS = "join(" + gridS + "," + numOfColumns + "," + pathS + ", RGrids)";
@@ -122,11 +122,14 @@ function Game() {
 
   function mostrarResultadoParcial(puntajeParcial) {
     let celdaPuntaje = document.querySelector(".previewBanner .square");
+    let banner = document.querySelector(".previewBanner");
 
     if (puntajeParcial !== 0) {
+      banner.style.backgroundColor = "white";
       celdaPuntaje.innerText = puntajeParcial;
       celdaPuntaje.style.backgroundColor = numberToColor(puntajeParcial);
     } else {
+      banner.style.backgroundColor = "";
       celdaPuntaje.innerText = "";
       celdaPuntaje.style.backgroundColor = "";
     }

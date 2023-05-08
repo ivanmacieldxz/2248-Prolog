@@ -365,12 +365,8 @@ caminoRec(PosX, Grilla, Columnas, ListaAdyacentes, ListaCaminoActual, ListaPosCa
     	ValorPosX is ValorPosA, not(esta(A, ListaCaminoActual)) ->  
     	%obtengo la lista de adyacentes
     	listaAdyacentes(A, Grilla, Columnas, ListaAdyacentesA),
-        %añado A a la lista del camino, si no está
-    	(
-        	esta(A, ListaCaminoActual) ->  
-        	append(ListaCaminoActual, [], ListaParcialConA);
-            append(ListaCaminoActual, [A], ListaParcialConA)
-        ),
+        %añado A a la lista del camino
+        append(ListaCaminoActual, [A], ListaParcialConA),
         %verifico cada adyacente
     	caminoRec(A, Grilla, Columnas, ListaAdyacentesA, ListaParcialConA, SubcaminoDesdeA),
         CaminoParcial = SubcaminoDesdeA;

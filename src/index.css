@@ -19,6 +19,7 @@ body {
 }
 
 .previewBanner {
+  transition: 0.1s ease-in;
   width: 100%;
   position: absolute;
   display: flex;
