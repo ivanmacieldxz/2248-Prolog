@@ -17,7 +17,7 @@ preview(Grilla, Columnas, Camino, Prev) :-
 /**
  * square_score(+Grilla, +Camino, -Square)
  * Square es el valor de la menor potencia de 2 que supera o iguala la sumatoria de los valores de las 
- * posiciones del camino Camino en la grilla Grilla.
+ * posiciones del camino Camino en laf grilla Grilla.
  * Camino es una lista de elementos donde cada elemento es una posición de la grilla en formato de lista, 
  * en lugar de en formato de matriz, es decir, es de la forma [x, y, z, |Ps] en lugar de 
  * [[x, y], [x1, y2] | Ps]
@@ -108,7 +108,12 @@ lista_posiciones(ListaPosicionesMatricial, NumColumns, Posiciones) :-
 
 /* Generación segunda parte del efecto (Aplicar gravedad e insertar nuevas celdas en Grilla))*/
 
-%factorización del código que genera la segunda parte del efecto
+/**
+ * generacion_segundas_grillas(+Grid, +NumOfColumns, -GrillaEfectoFinal)
+ * GrillasEfectoFinal es una lista conformada por dos listas, que representan dos grillas donde la primera 
+ * se corresponde con la grilla original Grilla, pero con el efecto de gravedad aplicado; y la ultima 
+ * correspondiendose con la grilla anterior, pero con las celdas vacias completas con número aleatoreos.
+ */
 generacion_segundas_grillas(Grid, NumOfColumns, GrillaEfectoFinal):-
     listas_columnas(Grid, NumOfColumns, ListaColumnas),
     findall(ListasGravedad,(member(ListSinG,ListaColumnas),efecto_gravedad_columna(ListSinG,ListasGravedad)),ListasColumnasGravedadAp),
@@ -117,86 +122,139 @@ generacion_segundas_grillas(Grid, NumOfColumns, GrillaEfectoFinal):-
     generacion_nuevas_celdas(GrillaEfectoGravedad, GrillaCeldasNuevas),
     GrillaEfectoFinal = [GrillaEfectoGravedad,GrillaCeldasNuevas].
 
-%listas_columnas(+Grid, +NumOfColumns, -ListaColumn)
-%obtiene una lista ListaColumn que contiene las listas de los elementos de cada columna
+/**
+ *  listas_columnas(+Grid, +NumOfColumns, -ListaColumn)
+ *  ListaColumn es una lista que contiene las listas de los elementos de cada columnas de la grilla Grid.
+ *  Si Grid tiene NumOfColumnas cantidad de columnas, ListaColumn tendra NumOfColumns cantidad de listas.
+ */
 listas_columnas(Grid, NumOfColumns, ListaColumn):-
     grilla_posiciones(Grid,0,0,NumOfColumns,GridPos),
     lista_numeros(NumOfColumns,Columnas),
+    %Para cada columna de la grilla, busca las listas que contienen los elementos pertenencientes a una columna.
     findall(List,(member(C,Columnas),lista_columna(C,NumOfColumns,Grid,GridPos,List)),ListaColumn).
 
-%lista_columna(+Num, +NumOfColumns, +Grid, +GridPos, -Lista)
-%obtiene una lista Lista que contiene los elementos de la columna Num
+/**
+*  lista_columna(+Num, +NumOfColumns, +Grid, +GridPos, -Lista)
+*  Lista es una lista que contiene los elementos de la columna Num de la grilla Grid.
+*  GridPos es una grilla que contiene las pos en formato matricial correspondientes a Grid.
+*/
 lista_columna(Num, NumOfColumns, Grid, GridPos, Lista):-
+    %Para cada elemento ubicada en la misma columna Num, agregarla a la lista Lista 
     findall(Elem,(member([X,Num],GridPos), elemento_de_grid(Grid, NumOfColumns, X, Num, Elem)),Lista).
 
-%efecto_gravedad_columna(+List, -ListEfectoGravedad)
-%obtiene una lista ListEfectoGravedad que se le aplico el efecto de gravedad
+/**
+*  efecto_gravedad_columna(+List, -ListEfectoGravedad)
+*  LitEfectoGravedad es una lista que posee los mismo elementos que la lista List pero con
+*  con el efecto de gravedad aplicado: los ceros pasan a estar en las primeras pos y los 
+*  distintos a cero en las ultimas.
+*/
 efecto_gravedad_columna(List, ListEfectoGravedad):-
     lista_ceros(List,ListCeros),
     lista_no_ceros(List,ListNoCeros),
     concatenar(ListCeros,ListNoCeros, ListEfectoGravedad).
 
-%obtener_grilla_de_columnas(+ListaColumn, -Grid)
-%obtiene una grilla Grid conformada por las columnas de ListaColumn
+/**
+*  obtener_grilla_de_columnas(+ListaColumn, -Grid)
+*  A partir de la lista de columnas ListaColumn, se obtiene su grilla equivalente Grid.
+*  La grilla Grid es la concatenacion de las listas de columnas.
+*/
 obtener_grilla_de_columnas(ListaColumn, Grid):-
+    %Obtengo el tamaño de una de las listas de ListaColumn
     member(L,ListaColumn), !,
     length(L, N),
+    %Obtengo las listas de las filas
     listas_filas(ListaColumn, N, L2),
+    %Como L2 está al revés, invertimos la lista
     invertir(L2, ListaFilas),
+    %concatenamos todas las listas y obtenemos la grilla Grid
     concatenar_listas_de_listas(ListaFilas, Grid).
 
-%listas_filas(+ListaColumn, +N, -ListasF)
-%obtiene la lista ListasF que contiene listas de las filas a partir de ListaColumn
+/**
+*  listas_filas(+ListaColumn, +N, -ListasF)
+*  Se obtiene la lista de las N filas de una grilla a partir de una lista que contiene
+*  las columnas de la misma. Se busca desde la fila N a la fila 0.
+*/
+%caso base
 listas_filas(_, 0, []).
+%caso recursivo
 listas_filas(L1, N, [H|T]) :-
+    %busca la lista de elementos de la fila N
     lista_fila(L1, N, H),
     N1 is N - 1,
+    %busca fila anterior
     listas_filas(L1, N1, T), !.
 
-%lista_fila(+ListaColumn, +N, -ListaF)
-%obtiene la lista ListaF que contiene los elementos de una fila a partir de ListaColumn
+/**
+*  lista_fila(+ListaColumn, +N, -ListaF)
+*  ListaF es una lista que contiene los elementos de pos N en las listas de 
+*  ListaColumn
+*/
+%caso base
 lista_fila([], _, []).
-lista_fila([H|T], N, []) :-
-    length(H, M),
-    M < N,
-    lista_fila(T, N, []).
+%caso recursivo
 lista_fila([H|T], N, [E|L]) :-
+    %agregamos elemento N pos de lista H en ListaF
     nth1(N, H, E),
     lista_fila(T, N, L).
 
-%grilla_posiciones(+Grid, +F, +C, +NumOfColumns, -GridPos)
-%obtiene la grilla GridPos que contiene todas las pos del estilo [X,Y] que Grid tiene
+/**
+*  grilla_posiciones(+Grid, +F, +C, +NumOfColumns, -GridPos)
+*  GridPos es una grilla que contiene todas las pos del estilo [X,Y] correspondiente a
+*  la grilla Grid a partir de la posición [F, C]
+*/
+%caso base
 grilla_posiciones([],_F, _C, _NumOfColumns, []).
+%caso recursivo 1
 grilla_posiciones([_G|GS], F, C, NumOfColumns, [[F,C]|XS]):-
+   %mientras todavia no estemos en la ultima columna
    C < NumOfColumns,
    NC is C + 1,
    grilla_posiciones(GS, F, NC, NumOfColumns, XS), !.
+%caso recursivo 2
 grilla_posiciones([_G|GS], F, C, NumColumns, [[F,C]|XS]):-
+   %si estamos en la ultima columna
    C is NumColumns - 1,
+   %pasamos a siguiente fila y volvemos a la columna inicial de la grilla
    NF is F + 1,
    grilla_posiciones(GS, NF, 0, NumColumns, XS).
 
-%elemento_de_grid(+GridList, +NumColumns, +X, +Y, -Element) 
-%obtiene el elemento que se encuentra la pos [X,Y] en la grilla GridList
+/**
+*  elemento_de_grid(+GridList, +NumColumns, +X, +Y, -Element) 
+*  Element se corresponde con el elemento que se encuentra en la pos [X,Y] en la grilla
+*  GridList de NumColumns cantidad de columnas
+*/
 elemento_de_grid(GridList, NumColumns, X, Y, Element) :-
+    %el elemento ubicado en la pos Index en la lista GridList debe ser igual a:
     nth0(Index, GridList, Element),
     X is div(Index, NumColumns),
     Y is mod(Index, NumColumns).
 
-/*---------------------nuevos celdas aleatorias---------------------------------*/
+/*-------------------------- Nuevos Celdas Aleatorias  ---------------------------------*/
 
-%generacion_nuevas_celdas(+Grilla, -GrillaCompleta)
-%obtiene una grilla GrillaCompleta a partir de Grilla, elementos 0 en Grilla tienen otros valores en GrillaCompleta
+/**
+*  generacion_nuevas_celdas(+Grilla, -GrillaCompleta)
+*  GrillaCompleta es una grilla que contiene los mismos elementos de Grilla, pero los que estaban
+*  en cero en esta ultima, pasan a tener otro valor en la grilla resultante.
+*/
+%caso base
 generacion_nuevas_celdas([],[]).
+%caso recursivo 1
 generacion_nuevas_celdas([X|XS], [X|XSS]):-
+    %Si X es distinto de cero, pertenece a las dos grillas en la misma pos
     X \= 0,
     generacion_nuevas_celdas(XS,XSS).
+%caso recursivo 2
 generacion_nuevas_celdas([0|XS], [X|XSS]):-
+    %Si ahora hay elemento igual a cero en Grilla
+    %El valor X de GrillaCompleta pasa a ser un número random
     generar_valor_random(X),
     generacion_nuevas_celdas(XS,XSS).
 
-%generar_valor_random(-X)
-%obtiene un número random entre 2, 4, 28, 16, 32 y 64
+/**
+*  generar_valor_random(-X)
+*  Siguiendo la lógica del juego, los unicos números random que se pueden obtener son:
+*  el 2, 4, 8, 16, 32 o 64
+*/
 generar_valor_random(X):-
     random_member(X,[2,4,8,16,32,64]).
 
