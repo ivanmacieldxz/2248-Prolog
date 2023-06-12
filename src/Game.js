@@ -140,6 +140,13 @@ function Game() {
 
     if(!waiting) {
 
+      //Bugfix: previene jugadas ilegales al presionar el booster cuando se estaba haciendo un camino
+      if (path !== []) {
+        setPath([]);
+        //deja de mostrar el resultado de terminar el camino en el momento
+        mostrarResultadoParcial(0);
+      }
+      
       const gridS = JSON.stringify(grid);
       const queryS = "booster_iguales(" + gridS + "," + numOfColumns + ", GrillasBooster)";
       setWaiting(true);
