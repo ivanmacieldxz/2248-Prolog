@@ -268,6 +268,8 @@ generar_valor_random(X):-
  * reemplazada por el número correspondiente a la menor potencia de dos mayor o igual a la sumatoria 
  * de los valores del camino.
  */
+
+/*
 booster_iguales(Grilla, Columnas, Grillas) :-
     %todos los caminos que el jugador podría formar
     listado_caminos(Grilla, Columnas, PreListadoBooster),
@@ -282,7 +284,184 @@ booster_iguales(Grilla, Columnas, Grillas) :-
 	generacion_segundas_grillas(UltimaGrillaBooster, Columnas, GrillaEfectoFinal),
 	%finalmente, agrego las grillas del efecto de gravedad
 	append(GrillasBoosterAplicado, GrillaEfectoFinal, Grillas).
+*/
 
+
+%-----------------------------------------------------------------------------------
+
+booster_iguales(Grilla, Columnas, Grillas) :-
+    %todos los caminos que el jugador podría formar
+    lista_listas_caminos_conformables(Grilla, Columnas, ListaCaminos),
+    %obtengo las grillas de la animación del efecto
+    grillas_efecto_booster(Grilla, Columnas, ListaCaminos, GrillasBoosterAplicado),
+	%obtengo la grilla final del efecto del booster
+	length(GrillasBoosterAplicado, LBoostAp),
+	nth1(LBoostAp, GrillasBoosterAplicado, UltimaGrillaBooster),
+	%y la uso como base para aplicarle el efecto de gravedad
+	generacion_segundas_grillas(UltimaGrillaBooster, Columnas, GrillaEfectoFinal),
+	%finalmente, agrego las grillas del efecto de gravedad
+	append(GrillasBoosterAplicado, GrillaEfectoFinal, Grillas).
+
+lista_listas_caminos_conformables(Matriz, Columnas, Lista_listas) :-
+    length(Matriz, Tam_matriz),
+    Pos_ini is Tam_matriz - 1,
+    lista_listas_caminos_conformables_rec(Pos_ini, Matriz, Columnas, [], Lista_listas_duplicados_y_subcaminos),
+    lista_listas_sin_duplicados_subcaminos(Lista_listas_duplicados_y_subcaminos, Lista_listas_duplicados_y_subcaminos, Lista_listas_sin_d_ni_s),
+    lista_listas_mayor_final(Lista_listas_sin_d_ni_s, Lista_listas_sin_d_ni_s, Lista_listas_mayor_final),
+    lista_listas_sin_unitarias(Lista_listas_mayor_final, Lista_listas_mayor_final, Lista_listas).
+
+lista_listas_mayor_final([], Lista_referencia, Lista_referencia).
+lista_listas_mayor_final([L|T], Lista_referencia, Lista_final) :-
+    obtener_mayor(L, Mayor),
+    reemplazar_al_final(Mayor, L, L_mayor_al_final),
+    replace(L, L_mayor_al_final, Lista_referencia, Lista_parcial),
+    lista_listas_mayor_final(T, Lista_parcial, Lista_final).
+
+lista_listas_sin_unitarias([], Lista_listas_referencia, Lista_listas_referencia).
+lista_listas_sin_unitarias([L|T], Lista_listas_referencia, Lista_listas) :-
+    length(L, TamL),
+    (
+        TamL < 2 ->
+        select(L, Lista_listas_referencia, Lista_listas_parcial);
+        Lista_listas_parcial = Lista_listas_referencia
+    ),
+    lista_listas_sin_unitarias(T, Lista_listas_parcial, Lista_listas).
+
+reemplazar_al_final(X, Lista, Lista_X_al_final):-
+    select(X, Lista, Lista_sin_X),
+    append(Lista_sin_X, [X], Lista_X_al_final).
+
+% Predicado principal para obtener el mayor elemento de una lista
+obtener_mayor(Lista, Mayor) :-
+    % Llamamos al predicado auxiliar con la lista y un valor inicial menor que cualquier elemento posible
+    obtener_mayor_aux(Lista, 0, Mayor).
+
+% Caso base: cuando la lista está vacía, el mayor es el valor acumulado actual
+obtener_mayor_aux([], MayorActual, MayorActual).
+obtener_mayor_aux([H|T], MayorActual, Mayor) :-
+    % Si la cabeza de la lista es mayor que el valor acumulado actual,
+    % actualizamos el valor acumulado
+    (H > MayorActual ->
+        NuevoMayorActual = H;
+        NuevoMayorActual = MayorActual
+    ),
+    % Llamamos recursivamente al predicado con el resto de la lista
+    obtener_mayor_aux(T, NuevoMayorActual, Mayor).
+
+% primera lista es la original, segunda lista es la actual, última lista es el resultado final
+lista_listas_sin_duplicados_subcaminos([], Lista_listas_parcial, Lista_listas_parcial).
+lista_listas_sin_duplicados_subcaminos([L|T], Lista_listas_parcial, Lista_listas_final) :-
+    (
+    	%quito a L de la lista parcial
+    	select(L, Lista_listas_parcial, Lista_referencia_sin_L),
+    	%si existe una lista en la de referencia, que no sea L, tal que L tenga elementos en común:
+    	member(Lista, Lista_referencia_sin_L), intersection(L, Lista, Interseccion), not(Interseccion = []) ->  
+    	(
+        	%elimino la de menor longitud (sublista), o la primera por defecto (duplicado)
+        	length(Lista, Tam_lista),
+            length(L, Tam_L),
+            Tam_L =< Tam_lista ->  
+        	Lista_listas_parcial_sin_L = Lista_referencia_sin_L;
+        	select(Lista, Lista_listas_parcial, Lista_listas_parcial_sin_L)
+        );
+    	Lista_listas_parcial_sin_L = Lista_listas_parcial
+    ),
+    lista_listas_sin_duplicados_subcaminos(T, Lista_listas_parcial_sin_L, Lista_listas_final).
+    
+
+/*
+ * Se vuelve verdadero si Lista_listas_final es la lista que contiene todos los caminos conformables por 
+ * bloques de igual número en la grilla.
+ * Los caminos de Lista_listas_final pueden estar repetidos o tener subcaminos.
+ * */
+lista_listas_caminos_conformables_rec(Pos, _Matriz, _Columnas, Lista_listas_final, Lista_listas_final) :-
+    Pos is -1.
+lista_listas_caminos_conformables_rec(Pos, Matriz, Columnas, Lista_listas_parcial, Lista_listas_final) :-
+    (
+    	%si hay alguna lista en la lista de listas que la contenga
+    	member(Lista, Lista_listas_parcial), member(Pos, Lista) ->
+    	%entonces dejo la lista de listas como está
+    	Parcial_sin_adyacentes = Lista_listas_parcial;
+    	%sino, conformo la lista que contiene a pos y la añado a la lista de listas
+    	Lista = [Pos],
+        append(Lista_listas_parcial, [Lista], Parcial_sin_adyacentes)
+    ),
+    lista_parcial_con_adyacentes(Pos, Matriz, Columnas, Lista, Lista_pos_con_adyacentes),
+	PosSig is Pos - 1,
+    replace(Lista, Lista_pos_con_adyacentes, Parcial_sin_adyacentes, Parcial_con_adyacentes),
+    lista_listas_caminos_conformables_rec(PosSig, Matriz, Columnas, Parcial_con_adyacentes, Lista_listas_final).
+
+eliminar_sublista(_, [], []).
+eliminar_sublista([], [X|T], [X|T]).
+eliminar_sublista([X|T], Lista, Resultado) :-
+    Lista = [_H|_T1],
+    delete(Lista, X, Lista_sin_x),
+    eliminar_sublista(T, Lista_sin_x, Resultado).
+
+% Predicado para obtener la intersección de dos listas
+intersection([], _, []).
+intersection([H | T], L2, [H | Result]) :- 
+    member(H, L2),
+    intersection(T, L2, Result).
+intersection([_ | T], L2, Result) :- 
+    intersection(T, L2, Result).
+
+
+lista_parcial_con_adyacentes(Pos, Matriz, Columnas, Sin_adyacentes, Con_adyacentes) :-
+    lista_adyacentes(Pos, Matriz, Columnas, Adyacentes),
+    nth0(Pos, Matriz, Valor),
+    lista_expandida_con_iguales(Valor, Adyacentes, Matriz, Sin_adyacentes, Con_adyacentes).
+
+lista_expandida_con_iguales(_, [], _, Sin_adyacentes, Sin_adyacentes).
+lista_expandida_con_iguales(Valor, [X|T], Matriz, Sin_adyacentes, Con_adyacentes) :-
+    nth0(X, Matriz, ValorX),
+    (
+    	Valor = ValorX, not(member(X, Sin_adyacentes)) ->
+    	append(Sin_adyacentes, [X], Sin_adyacentes_con_X);
+    	Sin_adyacentes_con_X = Sin_adyacentes
+    ),
+    lista_expandida_con_iguales(Valor, T, Matriz, Sin_adyacentes_con_X, Con_adyacentes).
+
+replace(_, _, [], []).
+replace(O, R, [O|T], [R|T2]) :- replace(O, R, T, T2).
+replace(O, R, [H|T], [H|T2]) :- dif(H,O), replace(O, R, T, T2).
+
+lista_adyacentes(Pos, Grilla, Columnas, Lista) :-
+    length(Grilla, Long),
+    Pos >= 0,
+    Pos < Long,
+  	%Posiciones adyacentes
+    PosI is Pos - 1,
+    PosD is Pos + 1,
+    PosA is Pos - Columnas,
+    PosAb is Pos + Columnas,
+    PosDA is PosA + 1,
+    PosIA is PosA - 1,
+    PosIAb is PosAb - 1,
+    PosDAb is PosAb + 1,
+    %añado las correspondientes, según la ubicación de pos en la grilla
+    (
+    	%borde superior izquierdo
+    	Pos is 0 ->
+    	Lista = [PosD, PosAb, PosDAb];
+    	es_borde_sup_der(Pos, Grilla, Columnas) ->  
+    	Lista = [PosI, PosIAb, PosAb];
+        es_borde_sup(Pos, Grilla, Columnas) ->
+        Lista = [PosI, PosD, PosIAb, PosAb, PosDAb];
+    	es_borde_inf_der(Pos, Grilla, Columnas) ->  
+    	Lista = [PosIA, PosA, PosI];
+    	es_borde_inf_izq(Pos, Grilla, Columnas) ->  
+    	Lista = [PosA, PosDA, PosD];
+    	es_borde_inf(Pos, Grilla, Columnas) ->  
+    	Lista = [PosIA, PosA, PosDA, PosI, PosD];
+    	es_borde_izq(Pos, Grilla, Columnas) ->  
+    	Lista = [PosA, PosDA, PosD, PosAb, PosDAb];
+    	es_borde_der(Pos, Grilla, Columnas) ->  
+    	Lista = [PosIA, PosA, PosI, PosIAb, PosAb];
+    	Lista = [PosIA, PosA, PosDA, PosI, PosD, PosIAb, PosAb, PosDAb]
+    ).
+
+%-----------------------------------------------------------------------------------
 /**
  * listado_caminos(+Grilla, +Columnas, -Listado)
  * Listado es el listado de caminos conformables en la grilla, partiendo por la casilla inferior 
@@ -367,9 +546,9 @@ grillas_efecto_booster(Grilla, Columnas, ListadoBooster, Grillas) :-
     ListadoBooster = [Camino|RestoCaminos],
     %invierto al camino, dado que grillasCaminoReemplazado asume que la posición en la que termina el camino es la última 
     %y en la lista recibida por parámetro está al principio
-    invertir(Camino, CaminoCeldaPuntajeAlFinal),
+    %invertir(Camino, CaminoCeldaPuntajeAlFinal),
     %obtengo las grillas del camino
-    grillas_camino_reemplazado(CaminoCeldaPuntajeAlFinal, Grilla, [GrillaSinCamino, GrillaFinCaminoReemplazado]),
+    grillas_camino_reemplazado(Camino, Grilla, [GrillaSinCamino, GrillaFinCaminoReemplazado]),
     %utilizo la última de las grillas como referencia para continuar la recursión
     grillas_efecto_booster(GrillaFinCaminoReemplazado, Columnas, RestoCaminos, GrillasSinPrimerCamino),
     %añado a la primera de las grillas que formé, el resto de las grillas
@@ -437,7 +616,7 @@ camino_rec(PosX, Grilla, Columnas, ListaAdyacentes, ListaCaminoActual, ListaPosC
  * lista_adyacentes(+Pos, +Grilla, +Columnas, -Lista)
  * Lista es la lista de posiciones adyacentes a la posición Pos en la grilla Grilla de Columnas cantidad de 
  * columnas.
- */
+ *
 lista_adyacentes(Pos, Grilla, Columnas, Lista) :-
     length(Grilla, Long),
     Pos >= 0,
@@ -464,3 +643,4 @@ lista_adyacentes(Pos, Grilla, Columnas, Lista) :-
     	Lista = [PosI, PosDA, PosA, PosIA];
     	Lista = [PosIAb, PosI, PosDA, PosA, PosIA]
     ).
+*/

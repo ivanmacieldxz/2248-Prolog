@@ -17,6 +17,8 @@
         es_borde_inf_der/3,
         es_borde_izq/3,
         es_borde_sup/3,
+        es_borde_inf_izq/3,
+        es_borde_sup_der/3,
         concatenar_listas_de_listas/2,
         concatenar/3,
         invertir/2,
@@ -81,11 +83,16 @@ sublista([P|Ps], [X|Xs], Sublista) :-
     sublista(Ps, [X|Xs], SubSinP),
     insertar_inicio(SubSinP, Elem, Sublista).
 
+es_borde_inf_izq(Pos, Grilla, Columnas) :-
+    length(Grilla, Long),
+    Pos is Long - Columnas.
+
 es_borde_inf_der(Pos, Grilla, _Columnas) :- 
-    longitud(Grilla, Long),
+    length(Grilla, Long),
     Pos is Long - 1.
+
 es_borde_inf(Pos, Grilla, Columnas) :-
-    longitud(Grilla, Long),
+    length(Grilla, Long),
     Pos >= Long - Columnas,
     Pos =< Long - 1.
 
@@ -97,6 +104,9 @@ es_borde_izq(Pos, _Grilla, Columnas) :-
 
 es_borde_sup(Pos, _Grilla, Columnas) :-
     Pos < Columnas.
+
+es_borde_sup_der(Pos, _Grilla, Columnas) :-
+    Pos is Columnas - 1.
 
 %lista_ceros(+L,-ListCeros)
 %obtiene la lista ListCeros que contiene todos los ceros de L
