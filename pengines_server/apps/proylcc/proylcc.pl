@@ -357,12 +357,12 @@ lista_listas_sin_duplicados_subcaminos([L|T], Lista_listas_parcial, Lista_listas
     	%si existe una lista en la de referencia, que no sea L, tal que L tenga elementos en común:
     	member(Lista, Lista_referencia_sin_L), intersection(L, Lista, Interseccion), not(Interseccion = []) ->  
     	(
-        	%elimino la de menor longitud (sublista), o la primera por defecto (duplicado)
-        	length(Lista, Tam_lista),
-            length(L, Tam_L),
-            Tam_L =< Tam_lista ->  
-        	Lista_listas_parcial_sin_L = Lista_referencia_sin_L;
-        	select(Lista, Lista_listas_parcial, Lista_listas_parcial_sin_L)
+        	%elimino de L los elementos que tengan en común
+            eliminar_sublista(Interseccion, L, Elementos_solo_en_L),
+            %conformo la unión añadiendo en lista los elementos que no tienen en común
+            append(Lista, Elementos_solo_en_L, Union_listas),
+            %reemplazo lista en la lista de listas por su unión con L
+            replace(Lista, Union_listas, Lista_referencia_sin_L, Lista_listas_parcial_sin_L)
         );
     	Lista_listas_parcial_sin_L = Lista_listas_parcial
     ),
