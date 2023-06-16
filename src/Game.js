@@ -173,6 +173,18 @@ function Game() {
       pengine.query(queryS, (success, response) => {
         if (success) {
           setPath(response['CaminoMax']);
+          
+          const gridS = JSON.stringify(grid);
+          const pathS = JSON.stringify(response['CaminoMax']);
+          const queryS = "preview(" + gridS + "," + numOfColumns + "," + pathS + ", Prev)";
+
+          pengine.query(queryS, (success, response) => {
+            if (success) {
+              console.log(response);
+              mostrarResultadoParcial(response.Prev);
+            }
+          });
+
           setWaiting(false);
         } else {
           setWaiting(false);
