@@ -357,12 +357,12 @@ lista_listas_sin_duplicados_subcaminos([L|T], Lista_listas_parcial, Lista_listas
     	%si existe una lista en la de referencia, que no sea L, tal que L tenga elementos en común:
     	member(Lista, Lista_referencia_sin_L), intersection(L, Lista, Interseccion), not(Interseccion = []) ->  
     	(
-        	%elimino la de menor longitud (sublista), o la primera por defecto (duplicado)
-        	length(Lista, Tam_lista),
-            length(L, Tam_L),
-            Tam_L =< Tam_lista ->  
-        	Lista_listas_parcial_sin_L = Lista_referencia_sin_L;
-        	select(Lista, Lista_listas_parcial, Lista_listas_parcial_sin_L)
+        	%elimino de L los elementos que tengan en común
+            eliminar_sublista(Interseccion, L, Elementos_solo_en_L),
+            %conformo la unión añadiendo en lista los elementos que no tienen en común
+            append(Lista, Elementos_solo_en_L, Union_listas),
+            %reemplazo lista en la lista de listas por su unión con L
+            replace(Lista, Union_listas, Lista_referencia_sin_L, Lista_listas_parcial_sin_L)
         );
     	Lista_listas_parcial_sin_L = Lista_listas_parcial
     ),
@@ -516,7 +516,7 @@ eliminar_subcaminos(ListaCaminos, ListaOriginal, SinSubcaminos) :-
 eliminar_subcamino(_, ListaOriginal, [], ListaOriginal).
 eliminar_subcamino(Camino, ListaOriginal, ListaCaminosRevisar, ListaSinSubcamino) :-
     ListaCaminosRevisar = [SuperCamino|_],
-    %P es donde termina el subcamino en realidad (elemento de más abajo a la derecha)
+    %P es donde termina el subcamino en realidad (elemento de mas abajo a la derecha)
     Camino = [P|_Ps],
     %entonces si P aparece en alguno de los otros caminos, en esta llamada, en camino, significa que Camino es un subcamino
     esta(P, SuperCamino) ->  
@@ -579,10 +579,85 @@ grillas_camino_reemplazado(Camino, Grilla, ParDeGrillas) :-
 camino(PosX, Grilla, Columnas, ListaPosCamino) :-
 	%obtengo la lista de adyacentes (siempre son posiciones anteriores a posX)
     lista_adyacentes(PosX, Grilla, Columnas, ListaAdyacentes),
-    %añado x a la lista del camino, asegurándome que la posición de más abajo a la derecha quede primera
+    %añado x a la lista del camino, asegurándome que la posición de mas abajo a la derecha quede primera
     ListaParcial = [PosX],
     %conformo el camino verificando cada adyacente
     camino_rec(PosX, Grilla, Columnas, ListaAdyacentes, ListaParcial, ListaPosCamino).
+
+
+
+%Setea los valores para conseguir la lista de adyacente de la grilla que tiene el mayor valor
+ayuda_valor_maximo(Grilla, Columnas, CaminoMaxPos):-
+    length(Grilla, Long),
+    generar_lista_pos(Long,GrillaPos),
+    findall(Lista, (member(Pos, GrillaPos), camino_ad_posibles(Pos,Grilla,Columnas, Lista)), ListasCaminos),
+    eliminar_listas_uno_long(ListasCaminos,ListasCaminosLong),
+    valor_maximo(ListasCaminosLong, Grilla, CaminoMax),
+    lista_pos_matricial(CaminoMax, Columnas, CaminoMaxPos).
+
+%Busca la lista de adyacentes que optiene el número de mayor valor
+valor_maximo(ListasCaminos, Grilla, CaminoMaximo):-
+    findall(Valor, (member(Camino, ListasCaminos), square_score(Grilla, Camino, Valor)), ListasValores),
+    lista_elem_max(ValorMax,ListasValores),
+    findall(ListaMayor, (lista_mayor(Grilla, ListasCaminos, ValorMax, ListaMayor)), ListaMayores),
+    sublista_mas_larga(ListaMayores,CaminoMaximo).
+
+/*-----------------------------------------------AYUDA MOVIDAD MÁXIMA-----------------------------------------------------------------*/
+%Encuentra la sublista mas larga de una lista
+sublista_mas_larga([], []).
+sublista_mas_larga([H|T], Rta) :-
+    sublista_mas_larga(T, Sublista),
+    length(H, LenH),
+    length(Sublista, LenSublista),
+    (LenH > LenSublista ->
+        Rta = H
+    ;
+        Rta = Sublista
+    ).
+
+%encuentra la lista que posea el mayor valor
+lista_mayor(Grilla, [LC|LCS], ValorMayor, ListaMayor):-
+    (square_score(Grilla, LC, ValorMayor), ListaMayor = LC);
+    lista_mayor(Grilla, LCS, ValorMayor, ListaMayor).
+
+%obtiene todos los caminos adyacentes posibles de PosX
+camino_ad_posibles(PosX, Grilla, Columnas, ListaPosCamino) :-
+    lista_adyacentes(PosX, Grilla, Columnas, ListaAdyacentes),
+    ListaParcial = [PosX],
+    camino_ad_posibles_rec(PosX, Grilla, Columnas, ListaAdyacentes, ListaParcial, ListaPosCamino).
+
+camino_ad_posibles_rec(_PosX, _Grilla, _Columnas, [], ListaCaminoActual, ListaCaminoActual).
+camino_ad_posibles_rec(PosX, Grilla, Columnas, [_A|As], ListaCaminoActual, ListaPosCamino) :-
+    camino_ad_posibles_rec(PosX, Grilla, Columnas, As, ListaCaminoActual, ListaPosCamino).
+camino_ad_posibles_rec(PosX, Grilla, Columnas, ListaAdyacentes, ListaCaminoActual, ListaPosCamino) :-
+    ListaAdyacentes = [A|_As],
+    nth0(PosX, Grilla, ValorPosX),
+   	nth0(A, Grilla, ValorPosA),
+      (      
+    	%si ListaCaminoActual tiene un unico elemento y ValorPosA es igual a ValorPosX (primero de la lista)
+    	((length(ListaCaminoActual, 1), ValorPosX is ValorPosA);
+        %o si ValorPosA es igual a ValorPosX o es igual ValorPosX por 2
+        (not((length(ListaCaminoActual, 1))), (ValorPosX is ValorPosA; ValorPosA is ValorPosX*2))), 
+        
+        not(esta(A, ListaCaminoActual)) ->  lista_adyacentes(A, Grilla, Columnas, ListaAdyacentesA),
+        append(ListaCaminoActual, [A], ListaParcialConA),
+        
+    	camino_ad_posibles_rec(A, Grilla, Columnas, ListaAdyacentesA, ListaParcialConA, SubcaminoDesdeA),
+        ListaPosCamino = SubcaminoDesdeA
+    ).
+
+%genera lista de posiciones matriciales a partir de una lista de posiciones dada
+lista_pos_matricial([],_Columnas,[]).
+lista_pos_matricial([G|GS], Columnas, [X|XS]):-
+    posicion_matricial_lista(G, Columnas, X),
+    lista_pos_matricial(GS, Columnas, XS).
+
+%obtiene la posicion matricial correspondiente a la posicion en lista Z
+posicion_matricial_lista(Z, Columnas, [I, J]) :-
+    I is Z div Columnas,
+    J is Z - I*Columnas.
+
+/*-----------------------------------------------AYUDA MOVIDAD MÁXIMA-----------------------------------------------------------------*/
 
 /**
  * camino_rec(+PosX, +Grilla, +Columnas, +ListaAdyacentes, +ListaCaminoActual, -ListaPosCamino)

@@ -25,7 +25,10 @@
         lista_no_ceros/2,
         lista_ceros/2,
         lista_numeros/2,
-        esta/2
+        esta/2,
+        generar_lista_pos/2,
+        eliminar_listas_uno_long/2,
+        lista_elem_max/2
         
     ]).
 
@@ -155,3 +158,37 @@ concatenar_listas_de_listas([X|XS], Grid):-
 esta(X, [X|_T]).
 esta(X, [_|T]) :-
     esta(X, T).
+
+%genera lista de posiciones del estilo (0, 1, 2, ..., N-1)
+generar_lista_pos(N,List):-
+    N1 is N-1,
+    List = [0|LS],
+    generar_lista(N1,LS).
+%genera lista de numeros del 1 a N
+generar_lista(0, []).
+generar_lista(N, List) :-
+  N > 0,
+  N1 is N - 1,
+  generar_lista(N1, List1), !,
+  append(List1, [N], List).
+
+%elimina las listas de un elemento de la lista de listas
+eliminar_listas_uno_long([],[]).
+eliminar_listas_uno_long([X|XS],[X|XSS]):-
+    length(X,P), P > 1, !,
+    eliminar_listas_uno_long(XS,XSS).
+eliminar_listas_uno_long([X1|XS],XSS):-
+    length(X1,P), P is 1,
+    eliminar_listas_uno_long(XS,XSS).
+
+%encuentra el elemento M de mayor valor en la lista
+lista_elem_max(M, [X|Xs]):-
+         lista_elem_max_rec(M, X, Xs).
+lista_elem_max_rec(M, M, []):- !.
+lista_elem_max_rec(X, Y, [Z|Zs]):-
+          Z >= Y,
+          !,
+          lista_elem_max_rec(X, Z, Zs).
+lista_elem_max_rec(X, Y, [Z|Zs]):-
+          Z =< Y,
+          lista_elem_max_rec(X, Y, Zs).

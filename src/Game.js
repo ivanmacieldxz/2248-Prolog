@@ -4,6 +4,7 @@ import Board from './Board';
 import { joinResult, numberToColor } from './util';
 import Square from './Square';
 import Booster from './Booster';
+import AyudaValorMax from './AyudaValorMax';
 
 let pengine;
 
@@ -163,6 +164,22 @@ function Game() {
     }
 
   }
+  
+  function ayudaValorMaximo() {
+    if(!waiting) {
+      const gridS = JSON.stringify(grid);
+      const queryS = "ayuda_valor_maximo(" + gridS + "," + numOfColumns + ", CaminoMax)";
+      setWaiting(true);
+      pengine.query(queryS, (success, response) => {
+        if (success) {
+          setPath(response['CaminoMax']);
+          setWaiting(false);
+        } else {
+          setWaiting(false);
+        }
+      });
+    }
+  }
 
   if (grid === null) {
     return null;
@@ -191,6 +208,10 @@ function Game() {
         <Booster
           value={"Colapsar Iguales"}
           onClick={colapsarIguales}
+        />
+        <AyudaValorMax
+          value={"Valor Maximo"}
+          onClick={ayudaValorMaximo}
         />
       </div>
     </div>
