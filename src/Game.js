@@ -252,11 +252,11 @@ function Game() {
           onClick={colapsarIguales}
         />
         <AyudaValorMax
-          value={"Valor Maximo"}
+          value={"Ayuda Movida Máxima"}
           onClick={ayudaValorMaximo}
         />
         <AyudaMaximosIgualesAdyacentes
-          value={"X"}
+          value={"Ayuda máximos iguales adyacentes"}
           onClick={ayudaMaximosIgualesAdyacentes}
         />
       </div>

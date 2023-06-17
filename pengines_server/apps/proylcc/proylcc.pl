@@ -588,10 +588,7 @@ camino(PosX, Grilla, Columnas, ListaPosCamino) :-
 
 %Setea los valores para conseguir la lista de adyacente de la grilla que tiene el mayor valor
 ayuda_valor_maximo(Grilla, Columnas, CaminoMaxPos):-
-    length(Grilla, Long),
-    generar_lista_pos(Long,GrillaPos),
-    findall(Lista, (member(Pos, GrillaPos), camino_ad_posibles(Pos,Grilla,Columnas, Lista)), ListasCaminos),
-    eliminar_listas_uno_long(ListasCaminos,ListasCaminosLong),
+    generar_listas_caminos_no_unitarias(Grilla, Columnas, ListasCaminosLong),
     valor_maximo(ListasCaminosLong, Grilla, CaminoMax),
     lista_pos_matricial(CaminoMax, Columnas, CaminoMaxPos).
 
