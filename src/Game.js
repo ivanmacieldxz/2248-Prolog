@@ -256,7 +256,7 @@ function Game() {
           onClick={ayudaValorMaximo}
         />
         <AyudaMaximosIgualesAdyacentes
-          value={"Ayuda máximos iguales adyacentes"}
+          value={"Ayuda Máximos Iguales"}
           onClick={ayudaMaximosIgualesAdyacentes}
         />
       </div>
