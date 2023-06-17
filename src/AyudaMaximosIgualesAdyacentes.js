@@ -1,6 +1,6 @@
 import React from 'react';
 
-function AyudaValorMax({ value, onClick }) {
+function AyudaMaximosIgualesAdyacentes({ value, onClick }) {
     return (
         <div
             className='booster'
@@ -11,4 +11,4 @@ function AyudaValorMax({ value, onClick }) {
     )
 }
 
-export default AyudaValorMax;
+export default AyudaMaximosIgualesAdyacentes;

@@ -5,6 +5,7 @@ import { joinResult, numberToColor } from './util';
 import Square from './Square';
 import Booster from './Booster';
 import AyudaValorMax from './AyudaValorMax';
+import AyudaMaximosIgualesAdyacentes from './AyudaMaximosIgualesAdyacentes';
 
 let pengine;
 
@@ -193,6 +194,35 @@ function Game() {
     }
   }
 
+  function ayudaMaximosIgualesAdyacentes() {
+    if(!waiting) {
+      const gridS = JSON.stringify(grid);
+      const queryS = "ayuda_maximos_iguales_adyacentes(" + gridS + "," + numOfColumns + ", CaminoAyuda)";
+      setWaiting(true);
+      pengine.query(queryS, (success, response) => {
+        if (success) {
+          setPath(response['CaminoAyuda']);
+          console.log(response.CaminoAyuda);
+          
+          const gridS = JSON.stringify(grid);
+          const pathS = JSON.stringify(response['CaminoAyuda']);
+          const queryS = "preview(" + gridS + "," + numOfColumns + "," + pathS + ", Prev)";
+
+          pengine.query(queryS, (success, response) => {
+            if (success) {
+              console.log(response);
+              mostrarResultadoParcial(response.Prev);
+            }
+          });
+
+          setWaiting(false);
+        } else {
+          setWaiting(false);
+        }
+      });
+    }
+  }
+
   if (grid === null) {
     return null;
   }
@@ -224,6 +254,10 @@ function Game() {
         <AyudaValorMax
           value={"Valor Maximo"}
           onClick={ayudaValorMaximo}
+        />
+        <AyudaMaximosIgualesAdyacentes
+          value={"X"}
+          onClick={ayudaMaximosIgualesAdyacentes}
         />
       </div>
     </div>

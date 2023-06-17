@@ -719,3 +719,85 @@ lista_adyacentes(Pos, Grilla, Columnas, Lista) :-
     	Lista = [PosIAb, PosI, PosDA, PosA, PosIA]
     ).
 */
+
+
+
+
+
+
+ayuda_maximos_iguales_adyacentes(Matriz, Columnas, CaminoAyuda) :-
+    %genero las listas de caminos
+    generar_listas_caminos_no_unitarias(Matriz, Columnas, Listas),
+    %genero la lista de duplas valor-posicionFinal
+    lista_duplas_caminos(Matriz, Listas, [], ListaDuplas),
+    %reduzco la lista manteniendo solo aquellas duplas que verifiquen la condición de la ayuda
+    lista_duplas_caminos_restringida(Matriz, Columnas, ListaDuplas, ListaDuplas, ListaDuplasReducida),
+    %obtengo la dupla de mayor valor entre todas las que verifican la condición
+    ListaDuplasReducida = [PrimeraDupla|RestoDuplas],
+    dupla_mayor_valor(RestoDuplas, PrimeraDupla, Dupla),
+    Dupla = [_Valor, _Pos, Camino],
+    lista_pos_matricial(Camino, Columnas, CaminoAyuda).
+
+dupla_mayor_valor([], DuplaActual, DuplaActual).
+dupla_mayor_valor(Lista_duplas, DuplaActual, DuplaR) :-
+    Lista_duplas = [PrimeraDupla|RestoDuplas],
+    PrimeraDupla = [Valor, _Pos, _Camino],
+    DuplaActual = [ValorActual, _PosActual, _CaminoActual],
+    (
+    	Valor > ValorActual ->
+    	MayorDuplaParcial = PrimeraDupla;
+    	MayorDuplaParcial = DuplaActual
+    ),
+    dupla_mayor_valor(RestoDuplas, MayorDuplaParcial, DuplaR).
+    
+
+%la lista resultante está compuesta solo por las duplas en las cuales el valor es el mismo que el de alguna 
+%casilla adyacente
+lista_duplas_caminos_restringida(_Grilla, _Columnas, [], ListaDuplasActual, ListaDuplasActual).
+lista_duplas_caminos_restringida(Grilla, Columnas, ListaDuplasReferencia, ListaDuplasActual, ListaDuplasReducida) :-
+    ListaDuplasReferencia = [Dupla|RestoDuplas],
+    Dupla = [Valor, Pos, _Camino],
+    %averiguo los adyacentes a la posición del valor
+    lista_adyacentes(Pos, Grilla, Columnas, ListaAdyacentes),
+    %obtengo la lista de adyacentes que tienen el mismo valor que el que se va a colocar en Pos
+    lista_adyacentes_reducida(Valor, Grilla, ListaAdyacentes, ListaAdyacentes, NuevaLista),
+    (
+    	NuevaLista = [] ->
+    	select(Dupla, ListaDuplasActual, ListaDuplasParcial);
+    	ListaDuplasParcial = ListaDuplasActual
+    ),
+    lista_duplas_caminos_restringida(Grilla, Columnas, RestoDuplas, ListaDuplasParcial, ListaDuplasReducida).
+
+lista_adyacentes_reducida(_Valor, _Matriz, [], ListaActual, ListaActual).
+lista_adyacentes_reducida(Valor, Matriz, Lista, ListaActual, NuevaLista) :-
+    Lista = [Adyacente|RestoAdyacentes],
+    nth0(Adyacente, Matriz, ValorA),
+    (
+    	Valor =:= ValorA ->  
+    	ListaParcial = ListaActual;
+    	select(Adyacente, ListaActual, ListaParcial)
+    ),
+    lista_adyacentes_reducida(Valor, Matriz, RestoAdyacentes, ListaParcial, NuevaLista).
+
+%listaDuplasValorPosFinCamino es una lista de pares, donde el primer valor es el valor a ser colocado en la
+%posición representada por el segundo valor, si se realizara el camino correspondiente en ListaCaminos
+lista_duplas_caminos(_, [], ListaDuplasActual, ListaDuplasActual).
+lista_duplas_caminos(Grilla, ListaCaminos, ListaDuplasActual, ListaDuplasValorPosFinCamino):-
+    ListaCaminos = [Camino|RestoCaminos],
+    valor_camino(Camino, Grilla, 0, ValorCamino),
+    length(Camino, LCamino),
+    nth1(LCamino, Camino, PosFinCamino),
+    append(ListaDuplasActual, [[ValorCamino, PosFinCamino, Camino]], ListaDuplasParcial),
+    lista_duplas_caminos(Grilla, RestoCaminos, ListaDuplasParcial, ListaDuplasValorPosFinCamino).
+
+valor_camino([], _Grilla, ValorActual, Valor) :-
+    menor_p2_mayor_X(ValorActual, Valor).
+valor_camino([Pos|RestoPos], Grilla, ValorActual, Valor) :-
+    nth0(Pos, Grilla, ValorPos),
+    ValorParcial is ValorActual + ValorPos,
+    valor_camino(RestoPos, Grilla, ValorParcial, Valor).
+generar_listas_caminos_no_unitarias(Grilla, Columnas, ListasCaminosNoUnitarias) :-
+    length(Grilla, Long),
+    generar_lista_pos(Long,GrillaPos),
+    findall(Lista, (member(Pos, GrillaPos), camino_ad_posibles(Pos,Grilla,Columnas, Lista)), ListasCaminos),
+    eliminar_listas_uno_long(ListasCaminos, ListasCaminosNoUnitarias).
