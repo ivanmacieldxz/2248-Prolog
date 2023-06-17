@@ -39,7 +39,6 @@ body {
 
 .footer {
   padding: 15px;
-  width: 80%;
   border-top: 1px solid lightgray;
   display: flex;
   flex-wrap: wrap;
@@ -61,6 +60,7 @@ body {
   border-color: rgb(15, 73, 182);
   border-radius: 10px;
   cursor: pointer;
+  margin: 0 10px;
 }
 
 .score {
